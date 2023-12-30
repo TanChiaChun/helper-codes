@@ -1,0 +1,104 @@
+name: CI
+on: push
+jobs:
+  bash:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Set Git autocrlf (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: git config --global core.autocrlf input
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+      - name: Add Go bin directory to GitHub Path (non-Windows)
+        if: ${{ matrix.os != 'windows-latest' }}
+        run: echo "$HOME/go/bin" >> $GITHUB_PATH
+      - name: Add Go bin directory to GitHub Path (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: >
+          "$env:HOMEDRIVE/$env:HOMEPATH/go/bin"
+          | Out-File -FilePath $env:GITHUB_PATH -Append
+      - name: Install shfmt
+        run: |
+          go install mvdan.cc/sh/v3/cmd/shfmt@latest
+          shfmt --version
+      - name: Install ShellCheck (macOS)
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew update
+          brew install shellcheck
+      - name: Install ShellCheck (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: choco install shellcheck
+      - name: Get ShellCheck version
+        run: shellcheck --version
+      - name: Install Bats
+        run: |
+          npm install --global bats
+          bats --version
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Get Python version
+        run: python --version
+      - name: Install packages
+        run: |
+          pip install --requirement ./git-hooks/requirements-dev.txt
+          black --version
+      - name: Install markdownlint
+        run: |
+          npm install --global markdownlint-cli
+          markdownlint --version
+      - name: Install Bash (macOS)
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew update
+          brew install bash
+      - name: Get Bash version
+        run: bash --version
+      - name: Run shfmt
+        shell: bash
+        run: |
+          source ./git-hooks/src/ci.sh
+          run_ci_bash_shfmt
+      - name: Run ShellCheck
+        shell: bash
+        run: |
+          source ./git-hooks/src/ci.sh
+          run_ci_bash_shellcheck
+      - name: Run Bats
+        shell: bash
+        run: |
+          source ./git-hooks/src/ci.sh
+          run_ci_bash_bats
+  markdown:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+      - name: Install markdownlint
+        run: |
+          npm install --global markdownlint-cli
+          markdownlint --version
+      - name: Install Bash (macOS)
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew update
+          brew install bash
+      - name: Get Bash version
+        run: bash --version
+      - name: Run markdownlint
+        shell: bash
+        run: |
+          source ./git-hooks/src/ci.sh
+          run_ci_markdown

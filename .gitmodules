@@ -1,0 +1,4 @@
+[submodule "git-hooks"]
+	path = git-hooks
+	url = git@github.com:TanChiaChun/git-hooks.git
+	branch = main
