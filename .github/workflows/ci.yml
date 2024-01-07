@@ -40,20 +40,6 @@ jobs:
         run: |
           npm install --global bats
           bats --version
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-      - name: Get Python version
-        run: python --version
-      - name: Install packages
-        run: |
-          pip install --requirement ./git-hooks/requirements-dev.txt
-          black --version
-      - name: Install markdownlint
-        run: |
-          npm install --global markdownlint-cli
-          markdownlint --version
       - name: Install Bash (macOS)
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
