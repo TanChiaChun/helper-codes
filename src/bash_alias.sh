@@ -10,10 +10,21 @@ set_alias() {
     alias py=python
 }
 
-main() {
-    set_alias
+source_git_hooks_ci() {
+    if [[ -f './git-hooks/src/ci.sh' ]]; then
+        # shellcheck source=/dev/null
+        source './git-hooks/src/ci.sh'
 
+        echo 'Loaded git-hooks ci'
+    fi
+}
+
+main() {
     echo '##################################################'
+
+    set_alias
+    source_git_hooks_ci
+
     echo 'Loaded bash_alias'
     echo '##################################################'
 }
