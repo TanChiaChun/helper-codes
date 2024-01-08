@@ -7,10 +7,10 @@ git_commit_no_verify() {
 }
 
 set_alias() {
-    alias shc=run_ci_bash
     alias mdc=run_ci_markdown
     alias py=python
     alias pyc=run_ci_python
+    alias shc=run_ci_bash
 }
 
 source_git_hooks_ci() {
