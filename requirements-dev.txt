@@ -1,0 +1,4 @@
+-r ./git-hooks/requirements-dev.txt
+types-requests
+
+-r ./requirements.txt
