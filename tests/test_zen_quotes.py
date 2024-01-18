@@ -30,7 +30,7 @@ class TestRequestQuote(unittest.TestCase):
         patcher.start()
         self.assertEqual(
             request_quote(QuoteMode.TODAY),
-            Quote(self.quotes[0]["q"], self.quotes[0]["a"]),
+            [Quote(self.quotes[0]["q"], self.quotes[0]["a"])],
         )
         patcher.stop()
 

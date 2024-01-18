@@ -21,7 +21,7 @@ class Quote:
     author: str = ""
 
 
-def request_quote(quote_mode: QuoteMode) -> Quote | list[Quote] | None:
+def request_quote(quote_mode: QuoteMode) -> list[Quote] | None:
     """Request quote from Zen Quotes.
 
     Args:
@@ -40,8 +40,6 @@ def request_quote(quote_mode: QuoteMode) -> Quote | list[Quote] | None:
 
     j = r.json()
 
-    if len(j) == 1:
-        return Quote(j[0]["q"], j[0]["a"])
     return [Quote(quote["q"], quote["a"]) for quote in j]
 
 
