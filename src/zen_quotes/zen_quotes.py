@@ -24,6 +24,10 @@ class Quote:
 class Quotes:
     """List of Quotes from Zen Quotes."""
 
+    def __init__(self) -> None:
+        self.quotes_today: list[Quote] | None = None
+        self.quotes: list[Quote] | None = None
+
     def request(self, quote_mode: QuoteMode) -> list[Quote] | None:
         """Request quote from Zen Quotes.
 
@@ -44,6 +48,11 @@ class Quotes:
         j = r.json()
 
         return [Quote(quote["q"], quote["a"]) for quote in j]
+
+    def run(self) -> None:
+        """Request & update quotes."""
+        self.quotes_today = self.request(QuoteMode.TODAY)
+        self.quotes = self.request(QuoteMode.QUOTES)
 
 
 def main() -> None:
