@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 import requests
-from zen_quotes.zen_quotes import Quote, QuoteMode, request_quote
+from zen_quotes.zen_quotes import Quote, QuoteMode, Quotes
 
 
 class TestRequestQuote(unittest.TestCase):
@@ -29,7 +29,7 @@ class TestRequestQuote(unittest.TestCase):
         )
         patcher.start()
         self.assertEqual(
-            request_quote(QuoteMode.TODAY),
+            Quotes().request(QuoteMode.TODAY),
             [Quote(self.quotes[0]["q"], self.quotes[0]["a"])],
         )
         patcher.stop()
@@ -45,7 +45,7 @@ class TestRequestQuote(unittest.TestCase):
         )
         patcher.start()
         self.assertEqual(
-            request_quote(QuoteMode.QUOTES),
+            Quotes().request(QuoteMode.QUOTES),
             [Quote(quote["q"], quote["a"]) for quote in self.quotes],
         )
         patcher.stop()
@@ -55,13 +55,13 @@ class TestRequestQuote(unittest.TestCase):
             "requests.get", new=Mock(side_effect=requests.ConnectionError)
         )
         patcher.start()
-        self.assertEqual(request_quote(QuoteMode.QUOTES), None)
+        self.assertEqual(Quotes().request(QuoteMode.QUOTES), None)
         patcher.stop()
 
     def test_request_quote_timeout(self) -> None:
         patcher = patch("requests.get", new=Mock(side_effect=requests.Timeout))
         patcher.start()
-        self.assertEqual(request_quote(QuoteMode.QUOTES), None)
+        self.assertEqual(Quotes().request(QuoteMode.QUOTES), None)
         patcher.stop()
 
     def test_request_quote_error_status_code(self) -> None:
@@ -69,7 +69,7 @@ class TestRequestQuote(unittest.TestCase):
             "requests.get", new=Mock(return_value=Mock(status_code=201))
         )
         patcher.start()
-        self.assertEqual(request_quote(QuoteMode.QUOTES), None)
+        self.assertEqual(Quotes().request(QuoteMode.QUOTES), None)
         patcher.stop()
 
 

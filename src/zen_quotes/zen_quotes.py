@@ -21,26 +21,29 @@ class Quote:
     author: str = ""
 
 
-def request_quote(quote_mode: QuoteMode) -> list[Quote] | None:
-    """Request quote from Zen Quotes.
+class Quotes:
+    """List of Quotes from Zen Quotes."""
 
-    Args:
-        quote_mode:
-            Quote mode to Zen Quotes.
-    """
-    try:
-        r = requests.get(
-            f"https://zenquotes.io/api/{quote_mode.value}", timeout=10
-        )
-    except (requests.ConnectionError, requests.Timeout):
-        return None
+    def request(self, quote_mode: QuoteMode) -> list[Quote] | None:
+        """Request quote from Zen Quotes.
 
-    if r.status_code != 200:
-        return None
+        Args:
+            quote_mode:
+                Quote mode to Zen Quotes.
+        """
+        try:
+            r = requests.get(
+                f"https://zenquotes.io/api/{quote_mode.value}", timeout=10
+            )
+        except (requests.ConnectionError, requests.Timeout):
+            return None
 
-    j = r.json()
+        if r.status_code != 200:
+            return None
 
-    return [Quote(quote["q"], quote["a"]) for quote in j]
+        j = r.json()
+
+        return [Quote(quote["q"], quote["a"]) for quote in j]
 
 
 def main() -> None:
