@@ -34,6 +34,9 @@ class Quotes:
         Args:
             quote_mode:
                 Quote mode to Zen Quotes.
+
+        Returns:
+            List of Quote, else None when error.
         """
         try:
             r = requests.get(
