@@ -5,7 +5,7 @@ import requests
 from zen_quotes.zen_quotes import Quote, QuoteMode, Quotes
 
 
-class TestRequestQuote(unittest.TestCase):
+class TestQuotesRequest(unittest.TestCase):
     def setUp(self) -> None:
         self.quotes = [
             {
