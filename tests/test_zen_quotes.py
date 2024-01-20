@@ -19,58 +19,48 @@ class TestQuotesRequest(unittest.TestCase):
         ]
 
     def test_request_quote_single(self) -> None:
-        patcher = patch(
+        with patch(
             "requests.get",
             new=Mock(
                 return_value=Mock(
                     status_code=200, json=Mock(return_value=[self.quotes[0]])
                 )
             ),
-        )
-        patcher.start()
-        self.assertEqual(
-            Quotes().request(QuoteMode.TODAY),
-            [Quote(self.quotes[0]["q"], self.quotes[0]["a"])],
-        )
-        patcher.stop()
+        ):
+            self.assertEqual(
+                Quotes().request(QuoteMode.TODAY),
+                [Quote(self.quotes[0]["q"], self.quotes[0]["a"])],
+            )
 
     def test_request_quote_multiple(self) -> None:
-        patcher = patch(
+        with patch(
             "requests.get",
             new=Mock(
                 return_value=Mock(
                     status_code=200, json=Mock(return_value=self.quotes)
                 )
             ),
-        )
-        patcher.start()
-        self.assertEqual(
-            Quotes().request(QuoteMode.QUOTES),
-            [Quote(quote["q"], quote["a"]) for quote in self.quotes],
-        )
-        patcher.stop()
+        ):
+            self.assertEqual(
+                Quotes().request(QuoteMode.QUOTES),
+                [Quote(quote["q"], quote["a"]) for quote in self.quotes],
+            )
 
     def test_request_quote_connection_error(self) -> None:
-        patcher = patch(
+        with patch(
             "requests.get", new=Mock(side_effect=requests.ConnectionError)
-        )
-        patcher.start()
-        self.assertEqual(Quotes().request(QuoteMode.QUOTES), None)
-        patcher.stop()
+        ):
+            self.assertEqual(Quotes().request(QuoteMode.QUOTES), None)
 
     def test_request_quote_timeout(self) -> None:
-        patcher = patch("requests.get", new=Mock(side_effect=requests.Timeout))
-        patcher.start()
-        self.assertEqual(Quotes().request(QuoteMode.QUOTES), None)
-        patcher.stop()
+        with patch("requests.get", new=Mock(side_effect=requests.Timeout)):
+            self.assertEqual(Quotes().request(QuoteMode.QUOTES), None)
 
     def test_request_quote_error_status_code(self) -> None:
-        patcher = patch(
+        with patch(
             "requests.get", new=Mock(return_value=Mock(status_code=201))
-        )
-        patcher.start()
-        self.assertEqual(Quotes().request(QuoteMode.QUOTES), None)
-        patcher.stop()
+        ):
+            self.assertEqual(Quotes().request(QuoteMode.QUOTES), None)
 
 
 if __name__ == "__main__":
