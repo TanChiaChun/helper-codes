@@ -1,10 +1,14 @@
 """Get quote from Zen Quotes."""
 
+import json
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from pathlib import Path
+from typing import Optional, TypeAlias
 
 import requests
+
+QuoteType: TypeAlias = dict[str, str]
 
 
 class QuoteMode(Enum):
@@ -53,10 +57,37 @@ class Quotes:
 
         return [Quote(quote["q"], quote["a"]) for quote in j]
 
+    def to_json(self) -> dict[str, QuoteType | list[QuoteType]]:
+        """Return class JSON representation."""
+        j: dict[str, QuoteType | list[QuoteType]] = {}
+
+        if self.quotes_today:
+            j[QuoteMode.TODAY.value] = self.quotes_today[0].__dict__
+        if self.quotes:
+            j[QuoteMode.QUOTES.value] = [
+                quote.__dict__ for quote in self.quotes
+            ]
+
+        return j
+
+    def write(self) -> None:
+        """Write quotes to JSON file."""
+        output_dir = Path("output")
+        if not output_dir.is_dir():
+            output_dir.mkdir()
+
+        with open(
+            Path(output_dir, "zen_quotes.json"), mode="w", encoding="utf8"
+        ) as f:
+            json.dump(self.to_json(), f, indent=4)
+
     def run(self) -> None:
-        """Request & update quotes."""
+        """Request quotes & write to JSON on success."""
         self.quotes_today = self.request(QuoteMode.TODAY)
         self.quotes = self.request(QuoteMode.QUOTES)
+
+        if self.quotes_today and self.quotes:
+            self.write()
 
 
 def main() -> None:
