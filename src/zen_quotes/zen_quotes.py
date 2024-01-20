@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import Optional
 
 import requests
 
@@ -25,10 +26,10 @@ class Quotes:
     """List of Quotes from Zen Quotes."""
 
     def __init__(self) -> None:
-        self.quotes_today: list[Quote] | None = None
-        self.quotes: list[Quote] | None = None
+        self.quotes_today: Optional[list[Quote]] = None
+        self.quotes: Optional[list[Quote]] = None
 
-    def request(self, quote_mode: QuoteMode) -> list[Quote] | None:
+    def request(self, quote_mode: QuoteMode) -> Optional[list[Quote]]:
         """Request quote from Zen Quotes.
 
         Args:
