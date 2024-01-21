@@ -1,13 +1,12 @@
 """Get quote from Zen Quotes."""
 
-import json
 import logging
-from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Optional, TypeAlias
 
 import requests
+from pydantic import BaseModel
 
 QuoteType: TypeAlias = dict[str, str]
 
@@ -21,20 +20,25 @@ class QuoteMode(Enum):
     QUOTES = "quotes"
 
 
-@dataclass
-class Quote:
+class Quote(BaseModel):
     """Quote from Zen Quotes."""
 
-    quote: str = ""
-    author: str = ""
+    quote: str
+    author: str
+
+
+class QuotesModel(BaseModel):
+    """List of Quotes from Zen Quotes."""
+
+    today: list[Quote]
+    quotes: list[Quote]
 
 
 class Quotes:
     """List of Quotes from Zen Quotes."""
 
     def __init__(self) -> None:
-        self.quotes_today: Optional[list[Quote]] = None
-        self.quotes: Optional[list[Quote]] = None
+        self.quotes: Optional[QuotesModel] = None
 
     def request(self, quote_mode: QuoteMode) -> Optional[list[Quote]]:
         """Request quote from Zen Quotes.
@@ -64,23 +68,16 @@ class Quotes:
 
         j = r.json()
 
-        return [Quote(quote["q"], quote["a"]) for quote in j]
-
-    def to_json(self) -> dict[str, QuoteType | list[QuoteType]]:
-        """Return class JSON representation."""
-        j: dict[str, QuoteType | list[QuoteType]] = {}
-
-        if self.quotes_today:
-            j[QuoteMode.TODAY.value] = self.quotes_today[0].__dict__
-        if self.quotes:
-            j[QuoteMode.QUOTES.value] = [
-                quote.__dict__ for quote in self.quotes
-            ]
-
-        return j
+        return [Quote(quote=quote["q"], author=quote["a"]) for quote in j]
 
     def write(self) -> None:
-        """Write quotes to JSON file."""
+        """Write quotes to JSON file.
+
+        Skip if None.
+        """
+        if not self.quotes:
+            return
+
         output_dir = Path("output")
         if not output_dir.is_dir():
             output_dir.mkdir()
@@ -88,14 +85,14 @@ class Quotes:
         with open(
             Path(output_dir, "zen_quotes.json"), mode="w", encoding="utf8"
         ) as f:
-            json.dump(self.to_json(), f, indent=4)
+            f.write(self.quotes.model_dump_json(indent=4))
 
     def run(self) -> None:
         """Request quotes & write to JSON on success."""
-        self.quotes_today = self.request(QuoteMode.TODAY)
-        self.quotes = self.request(QuoteMode.QUOTES)
-
-        if self.quotes_today and self.quotes:
+        today = self.request(QuoteMode.TODAY)
+        quotes = self.request(QuoteMode.QUOTES)
+        if today and quotes:
+            self.quotes = QuotesModel(today=today, quotes=quotes)
             self.write()
 
 

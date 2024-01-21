@@ -17,22 +17,6 @@ QUOTES = [
 ]
 
 
-class TestQuotes(unittest.TestCase):
-    def test_to_json(self) -> None:
-        quotes = Quotes()
-        quotes.quotes_today = [Quote(QUOTES[0]["q"], QUOTES[0]["a"])]
-        quotes.quotes = [Quote(quote["q"], quote["a"]) for quote in QUOTES]
-
-        expected = {
-            "today": {"quote": QUOTES[0]["q"], "author": QUOTES[0]["a"]},
-            "quotes": [
-                {"quote": QUOTES[0]["q"], "author": QUOTES[0]["a"]},
-                {"quote": QUOTES[1]["q"], "author": QUOTES[1]["a"]},
-            ],
-        }
-        self.assertDictEqual(quotes.to_json(), expected)
-
-
 class TestQuotesRequest(unittest.TestCase):
     def test_request_quote_single(self) -> None:
         with patch(
@@ -45,7 +29,7 @@ class TestQuotesRequest(unittest.TestCase):
         ):
             self.assertEqual(
                 Quotes().request(QuoteMode.TODAY),
-                [Quote(QUOTES[0]["q"], QUOTES[0]["a"])],
+                [Quote(quote=QUOTES[0]["q"], author=QUOTES[0]["a"])],
             )
 
     def test_request_quote_multiple(self) -> None:
@@ -59,7 +43,10 @@ class TestQuotesRequest(unittest.TestCase):
         ):
             self.assertEqual(
                 Quotes().request(QuoteMode.QUOTES),
-                [Quote(quote["q"], quote["a"]) for quote in QUOTES],
+                [
+                    Quote(quote=quote["q"], author=quote["a"])
+                    for quote in QUOTES
+                ],
             )
 
     def test_request_quote_connection_error(self) -> None:
