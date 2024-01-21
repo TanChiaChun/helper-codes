@@ -1,8 +1,9 @@
+import logging
 import unittest
 from unittest.mock import Mock, patch
 
 import requests
-from zen_quotes.zen_quotes import Quote, QuoteMode, Quotes
+from zen_quotes.zen_quotes import Quote, QuoteMode, Quotes, logger
 
 QUOTES = [
     {
@@ -64,18 +65,38 @@ class TestQuotesRequest(unittest.TestCase):
     def test_request_quote_connection_error(self) -> None:
         with patch(
             "requests.get", new=Mock(side_effect=requests.ConnectionError)
-        ):
+        ), self.assertLogs(logger, logging.WARNING) as logger_obj:
             self.assertEqual(Quotes().request(QuoteMode.QUOTES), None)
+            self.assertEqual(
+                logger_obj.records[0].getMessage(),
+                (
+                    "ConnectionError when requesting Zen Quotes: "
+                    "https://zenquotes.io/api/quotes"
+                ),
+            )
 
     def test_request_quote_timeout(self) -> None:
-        with patch("requests.get", new=Mock(side_effect=requests.Timeout)):
+        with patch(
+            "requests.get", new=Mock(side_effect=requests.Timeout)
+        ), self.assertLogs(logger, logging.WARNING) as logger_obj:
             self.assertEqual(Quotes().request(QuoteMode.QUOTES), None)
+            self.assertEqual(
+                logger_obj.records[0].getMessage(),
+                (
+                    "Timeout when requesting Zen Quotes: "
+                    "https://zenquotes.io/api/quotes"
+                ),
+            )
 
     def test_request_quote_error_status_code(self) -> None:
         with patch(
             "requests.get", new=Mock(return_value=Mock(status_code=201))
-        ):
+        ), self.assertLogs(logger, logging.WARNING) as logger_obj:
             self.assertEqual(Quotes().request(QuoteMode.QUOTES), None)
+            self.assertEqual(
+                logger_obj.records[0].getMessage(),
+                "Invalid HTTP status code: https://zenquotes.io/api/quotes",
+            )
 
 
 if __name__ == "__main__":

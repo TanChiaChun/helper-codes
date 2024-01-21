@@ -1,6 +1,7 @@
 """Get quote from Zen Quotes."""
 
 import json
+import logging
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -9,6 +10,8 @@ from typing import Optional, TypeAlias
 import requests
 
 QuoteType: TypeAlias = dict[str, str]
+
+logger = logging.getLogger(__name__)
 
 
 class QuoteMode(Enum):
@@ -43,14 +46,20 @@ class Quotes:
         Returns:
             List of Quote, else None when error.
         """
+        get_url = f"https://zenquotes.io/api/{quote_mode.value}"
         try:
-            r = requests.get(
-                f"https://zenquotes.io/api/{quote_mode.value}", timeout=10
+            r = requests.get(get_url, timeout=10)
+        except requests.ConnectionError:
+            logger.warning(
+                "ConnectionError when requesting Zen Quotes: %s", get_url
             )
-        except (requests.ConnectionError, requests.Timeout):
+            return None
+        except requests.Timeout:
+            logger.warning("Timeout when requesting Zen Quotes: %s", get_url)
             return None
 
         if r.status_code != 200:
+            logger.warning("Invalid HTTP status code: %s", get_url)
             return None
 
         j = r.json()
@@ -90,8 +99,15 @@ class Quotes:
             self.write()
 
 
+def configure_logger() -> None:
+    """Configure logger."""
+    logger.setLevel(logging.WARNING)
+    logger.addHandler(logging.StreamHandler())
+
+
 def main() -> None:
     """Main function."""
+    configure_logger()
     print("hello")
 
 
