@@ -53,7 +53,7 @@ class TestQuotesRequest(unittest.TestCase):
         with patch(
             "requests.get", new=Mock(side_effect=requests.ConnectionError)
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
-            self.assertEqual(Quotes().request(QuoteMode.QUOTES), None)
+            self.assertIsNone(Quotes().request(QuoteMode.QUOTES))
             self.assertEqual(
                 logger_obj.records[0].getMessage(),
                 (
@@ -66,7 +66,7 @@ class TestQuotesRequest(unittest.TestCase):
         with patch(
             "requests.get", new=Mock(side_effect=requests.Timeout)
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
-            self.assertEqual(Quotes().request(QuoteMode.QUOTES), None)
+            self.assertIsNone(Quotes().request(QuoteMode.QUOTES))
             self.assertEqual(
                 logger_obj.records[0].getMessage(),
                 (
@@ -79,7 +79,7 @@ class TestQuotesRequest(unittest.TestCase):
         with patch(
             "requests.get", new=Mock(return_value=Mock(status_code=201))
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
-            self.assertEqual(Quotes().request(QuoteMode.QUOTES), None)
+            self.assertIsNone(Quotes().request(QuoteMode.QUOTES))
             self.assertEqual(
                 logger_obj.records[0].getMessage(),
                 "Invalid HTTP status code: https://zenquotes.io/api/quotes",
