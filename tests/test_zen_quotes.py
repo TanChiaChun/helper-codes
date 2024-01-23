@@ -1,9 +1,9 @@
 import logging
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, mock_open, patch
 
 import requests
-from zen_quotes.zen_quotes import Quote, QuoteMode, Quotes, logger
+from zen_quotes.zen_quotes import Quote, QuoteMode, Quotes, QuotesModel, logger
 
 QUOTES = [
     {
@@ -15,6 +15,58 @@ QUOTES = [
         "a": "Emily Dickinson",
     },
 ]
+
+
+class TestQuotesRead(unittest.TestCase):
+    def test_read(self) -> None:
+        read_data = QuotesModel(
+            today=[Quote(quote=QUOTES[0]["q"], author=QUOTES[0]["a"])],
+            quotes=[
+                Quote(quote=quote["q"], author=quote["a"]) for quote in QUOTES
+            ],
+        ).model_dump_json(indent=4)
+
+        quotes = Quotes()
+        with patch(
+            "zen_quotes.zen_quotes.open", new=mock_open(read_data=read_data)
+        ):
+            quotes.read()
+        assert quotes.quotes is not None
+        self.assertEqual(quotes.quotes.model_dump_json(indent=4), read_data)
+
+    def test_read_file_not_found(self) -> None:
+        quotes = Quotes()
+        with patch(
+            "zen_quotes.zen_quotes.open",
+            new=Mock(side_effect=FileNotFoundError),
+        ), self.assertLogs(logger, logging.WARNING) as logger_obj:
+            quotes.read()
+            self.assertEqual(
+                logger_obj.records[0].getMessage(),
+                "Output file not found: output/zen_quotes.json",
+            )
+        self.assertIsNone(quotes.quotes)
+
+    def test_read_invalid_json(self) -> None:
+        read_data = QuotesModel(
+            today=[Quote(quote=QUOTES[0]["q"], author=QUOTES[0]["a"])],
+            quotes=[
+                Quote(quote=quote["q"], author=quote["a"]) for quote in QUOTES
+            ],
+        ).model_dump_json(indent=4)
+        read_data = read_data.replace("today", "oday", 1)
+
+        quotes = Quotes()
+        with patch(
+            "zen_quotes.zen_quotes.open",
+            new=mock_open(read_data=read_data),
+        ), self.assertLogs(logger, logging.WARNING) as logger_obj:
+            quotes.read()
+            self.assertEqual(
+                logger_obj.records[0].getMessage(),
+                "Error parsing output file: output/zen_quotes.json",
+            )
+        self.assertIsNone(quotes.quotes)
 
 
 class TestQuotesRequest(unittest.TestCase):

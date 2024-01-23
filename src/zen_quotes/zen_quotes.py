@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional, TypeAlias
 
 import requests
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 QuoteType: TypeAlias = dict[str, str]
 
@@ -37,8 +37,28 @@ class QuotesModel(BaseModel):
 class Quotes:
     """List of Quotes from Zen Quotes."""
 
+    OUTPUT_DIR = Path("output")
+    OUTPUT_FILE = Path(OUTPUT_DIR, "zen_quotes.json")
+
     def __init__(self) -> None:
         self.quotes: Optional[QuotesModel] = None
+
+    def read(self) -> None:
+        """Read quotes from JSON file.
+
+        Skip if file not found or error parsing JSON.
+        """
+        try:
+            with open(self.OUTPUT_FILE, encoding="utf8") as f:
+                j = f.read()
+        except FileNotFoundError:
+            logger.warning("Output file not found: %s", self.OUTPUT_FILE)
+            return
+
+        try:
+            self.quotes = QuotesModel.model_validate_json(j)
+        except ValidationError:
+            logger.warning("Error parsing output file: %s", self.OUTPUT_FILE)
 
     def request(self, quote_mode: QuoteMode) -> Optional[list[Quote]]:
         """Request quote from Zen Quotes.
@@ -78,22 +98,22 @@ class Quotes:
         if not self.quotes:
             return
 
-        output_dir = Path("output")
-        if not output_dir.is_dir():
-            output_dir.mkdir()
+        if not self.OUTPUT_DIR.is_dir():
+            self.OUTPUT_DIR.mkdir()
 
-        with open(
-            Path(output_dir, "zen_quotes.json"), mode="w", encoding="utf8"
-        ) as f:
+        with open(self.OUTPUT_FILE, mode="w", encoding="utf8") as f:
             f.write(self.quotes.model_dump_json(indent=4))
 
     def run(self) -> None:
         """Request quotes & write to JSON on success."""
-        today = self.request(QuoteMode.TODAY)
-        quotes = self.request(QuoteMode.QUOTES)
-        if today and quotes:
-            self.quotes = QuotesModel(today=today, quotes=quotes)
-            self.write()
+        self.read()
+
+        if not self.quotes:
+            today = self.request(QuoteMode.TODAY)
+            quotes = self.request(QuoteMode.QUOTES)
+            if today and quotes:
+                self.quotes = QuotesModel(today=today, quotes=quotes)
+                self.write()
 
 
 def configure_logger() -> None:
