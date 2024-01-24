@@ -76,13 +76,17 @@ class Quotes:
             with open(self.OUTPUT_FILE, encoding="utf8") as f:
                 j = f.read()
         except FileNotFoundError:
-            logger.warning("Output file not found: %s", self.OUTPUT_FILE)
+            logger.warning(
+                "Output file not found: %s", self.OUTPUT_FILE.as_posix()
+            )
             return
 
         try:
             self.quotes = QuotesModel.model_validate_json(j)
         except ValidationError:
-            logger.warning("Error parsing output file: %s", self.OUTPUT_FILE)
+            logger.warning(
+                "Error parsing output file: %s", self.OUTPUT_FILE.as_posix()
+            )
 
     def request(self, quote_mode: QuoteMode) -> Optional[list[Quote]]:
         """Request quote from Zen Quotes.
