@@ -119,6 +119,8 @@ class Quotes:
         self.read()
 
         if self.is_update_required():
+            print("Requesting new quotes")
+
             today = self.request(QuoteMode.TODAY)
             quotes = self.request(QuoteMode.QUOTES)
             if today and quotes:
