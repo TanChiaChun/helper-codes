@@ -34,27 +34,27 @@ jobs:
       - name: Run Black
         shell: bash
         run: |
-          source ./src/ci.sh
+          source ./git-hooks/src/ci.sh
           run_ci_python_black
       - name: Run Pylint
         shell: bash
         run: |
-          source ./src/ci.sh
+          source ./git-hooks/src/ci.sh
           run_ci_python_pylint
       - name: Run mypy
         shell: bash
         run: |
-          source ./src/ci.sh
+          source ./git-hooks/src/ci.sh
           run_ci_python_mypy
       - name: Run isort
         shell: bash
         run: |
-          source ./src/ci.sh
+          source ./git-hooks/src/ci.sh
           run_ci_python_isort
       - name: Run unittest
         shell: bash
         run: |
-          source ./src/ci.sh
+          source ./git-hooks/src/ci.sh
           run_ci_python_unittest
   bash:
     strategy:
