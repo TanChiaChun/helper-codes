@@ -155,7 +155,7 @@ def configure_logger() -> None:
 def main() -> None:
     """Main function."""
     configure_logger()
-    print("hello")
+    Quotes().run()
 
 
 if __name__ == "__main__":
