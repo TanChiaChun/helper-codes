@@ -186,5 +186,28 @@ class TestQuotesRequest(unittest.TestCase):
             )
 
 
+class TestModule(unittest.TestCase):
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_main(self, mock_stdout: StringIO) -> None:
+        read_data = QUOTES_MODEL.model_dump_json(indent=4)
+        expected = (
+            "TODAY:\n"
+            f"{QUOTES[0]['q']} - {QUOTES[0]['a']}\n"
+            "\n"
+            "RANDOM:\n"
+            f"{QUOTES[1]['q']} - {QUOTES[1]['a']}\n"
+            "\n"
+        )
+
+        with patch(
+            "zen_quotes.zen_quotes.open", new=mock_open(read_data=read_data)
+        ), patch(
+            "zen_quotes.zen_quotes.choice",
+            new=Mock(return_value=QUOTES_MODEL.quotes[1]),
+        ):
+            Quotes().run()
+        self.assertEqual(mock_stdout.getvalue(), expected)
+
+
 if __name__ == "__main__":
     unittest.main()
