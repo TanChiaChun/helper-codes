@@ -50,10 +50,10 @@ class TestQuotes(unittest.TestCase):
 
         expected = (
             "TODAY:\n"
-            f"{quotes.quotes.today[0]}\n"
+            f"{QUOTES[0]['q']} - {QUOTES[0]['a']}\n"
             "\n"
             "RANDOM:\n"
-            f"{quotes.quotes.quotes[1]}\n"
+            f"{QUOTES[1]['q']} - {QUOTES[1]['a']}\n"
             "\n"
         )
         with patch(
