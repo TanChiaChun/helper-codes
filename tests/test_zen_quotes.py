@@ -17,6 +17,11 @@ QUOTES = [
         "a": "Emily Dickinson",
     },
 ]
+QUOTES_MODEL = QuotesModel(
+    last_update=date.today(),
+    today=[Quote(quote=QUOTES[0]["q"], author=QUOTES[0]["a"])],
+    quotes=[Quote(quote=quote["q"], author=quote["a"]) for quote in QUOTES],
+)
 
 
 class TestQuotes(unittest.TestCase):
@@ -24,13 +29,7 @@ class TestQuotes(unittest.TestCase):
         quotes = Quotes()
         self.assertIs(quotes.is_update_required(), True)
 
-        quotes.quotes = QuotesModel(
-            last_update=date.today(),
-            today=[Quote(quote=QUOTES[0]["q"], author=QUOTES[0]["a"])],
-            quotes=[
-                Quote(quote=quote["q"], author=quote["a"]) for quote in QUOTES
-            ],
-        )
+        quotes.quotes = QUOTES_MODEL
         self.assertIs(quotes.is_update_required(), False)
 
         quotes.quotes.last_update -= timedelta(days=1)
@@ -50,13 +49,7 @@ class TestQuotes(unittest.TestCase):
 
 class TestQuotesRead(unittest.TestCase):
     def test_read(self) -> None:
-        read_data = QuotesModel(
-            last_update=date.today(),
-            today=[Quote(quote=QUOTES[0]["q"], author=QUOTES[0]["a"])],
-            quotes=[
-                Quote(quote=quote["q"], author=quote["a"]) for quote in QUOTES
-            ],
-        ).model_dump_json(indent=4)
+        read_data = QUOTES_MODEL.model_dump_json(indent=4)
 
         quotes = Quotes()
         with patch(
@@ -80,13 +73,7 @@ class TestQuotesRead(unittest.TestCase):
         self.assertIsNone(quotes.quotes)
 
     def test_read_invalid_json(self) -> None:
-        read_data = QuotesModel(
-            last_update=date.today(),
-            today=[Quote(quote=QUOTES[0]["q"], author=QUOTES[0]["a"])],
-            quotes=[
-                Quote(quote=quote["q"], author=quote["a"]) for quote in QUOTES
-            ],
-        ).model_dump_json(indent=4)
+        read_data = QUOTES_MODEL.model_dump_json(indent=4)
         read_data = read_data.replace("today", "oday", 1)
 
         quotes = Quotes()
