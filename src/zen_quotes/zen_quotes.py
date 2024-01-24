@@ -4,6 +4,7 @@ import logging
 from datetime import date
 from enum import Enum
 from pathlib import Path
+from random import choice
 from typing import Optional, TypeAlias
 
 import requests
@@ -26,6 +27,9 @@ class Quote(BaseModel):
 
     quote: str
     author: str
+
+    def __str__(self) -> str:
+        return f"{self.quote} - {self.author}"
 
 
 class QuotesModel(BaseModel):
@@ -52,6 +56,16 @@ class Quotes:
         if not self.quotes:
             return True
         return False
+
+    def print(self) -> None:
+        """Print TODAY quote and 1 quote randomly from QUOTES."""
+        if self.quotes:
+            print("TODAY:")
+            print(self.quotes.today[0])
+            print("")
+            print("RANDOM:")
+            print(choice(self.quotes.quotes))
+            print("")
 
     def read(self) -> None:
         """Read quotes from JSON file.
@@ -128,6 +142,8 @@ class Quotes:
                     last_update=date.today(), today=today, quotes=quotes
                 )
                 self.write()
+
+        self.print()
 
 
 def configure_logger() -> None:

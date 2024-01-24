@@ -24,6 +24,14 @@ QUOTES_MODEL = QuotesModel(
 )
 
 
+class TestQuote(unittest.TestCase):
+    def test_str(self) -> None:
+        self.assertEqual(
+            str(Quote(quote=QUOTES[0]["q"], author=QUOTES[0]["a"])),
+            f"{QUOTES[0]['q']} - {QUOTES[0]['a']}",
+        )
+
+
 class TestQuotes(unittest.TestCase):
     def test_is_update_required(self) -> None:
         quotes = Quotes()
@@ -34,6 +42,26 @@ class TestQuotes(unittest.TestCase):
 
         quotes.quotes.last_update -= timedelta(days=1)
         self.assertIs(quotes.is_update_required(), True)
+
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_print(self, mock_stdout: StringIO) -> None:
+        quotes = Quotes()
+        quotes.quotes = QUOTES_MODEL
+
+        expected = (
+            "TODAY:\n"
+            f"{quotes.quotes.today[0]}\n"
+            "\n"
+            "RANDOM:\n"
+            f"{quotes.quotes.quotes[1]}\n"
+            "\n"
+        )
+        with patch(
+            "zen_quotes.zen_quotes.choice",
+            new=Mock(return_value=quotes.quotes.quotes[1]),
+        ):
+            quotes.print()
+        self.assertEqual(mock_stdout.getvalue(), expected)
 
     @patch("sys.stdout", new_callable=StringIO)
     def test_run_print_only(self, mock_stdout: StringIO) -> None:
