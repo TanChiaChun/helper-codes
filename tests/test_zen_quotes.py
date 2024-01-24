@@ -1,5 +1,6 @@
 import logging
 import unittest
+from datetime import date, timedelta
 from unittest.mock import Mock, mock_open, patch
 
 import requests
@@ -17,9 +18,28 @@ QUOTES = [
 ]
 
 
+class TestQuotes(unittest.TestCase):
+    def test_is_update_required(self) -> None:
+        quotes = Quotes()
+        self.assertIs(quotes.is_update_required(), True)
+
+        quotes.quotes = QuotesModel(
+            last_update=date.today(),
+            today=[Quote(quote=QUOTES[0]["q"], author=QUOTES[0]["a"])],
+            quotes=[
+                Quote(quote=quote["q"], author=quote["a"]) for quote in QUOTES
+            ],
+        )
+        self.assertIs(quotes.is_update_required(), False)
+
+        quotes.quotes.last_update -= timedelta(days=1)
+        self.assertIs(quotes.is_update_required(), True)
+
+
 class TestQuotesRead(unittest.TestCase):
     def test_read(self) -> None:
         read_data = QuotesModel(
+            last_update=date.today(),
             today=[Quote(quote=QUOTES[0]["q"], author=QUOTES[0]["a"])],
             quotes=[
                 Quote(quote=quote["q"], author=quote["a"]) for quote in QUOTES
@@ -49,6 +69,7 @@ class TestQuotesRead(unittest.TestCase):
 
     def test_read_invalid_json(self) -> None:
         read_data = QuotesModel(
+            last_update=date.today(),
             today=[Quote(quote=QUOTES[0]["q"], author=QUOTES[0]["a"])],
             quotes=[
                 Quote(quote=quote["q"], author=quote["a"]) for quote in QUOTES

@@ -1,6 +1,7 @@
 """Get quote from Zen Quotes."""
 
 import logging
+from datetime import date
 from enum import Enum
 from pathlib import Path
 from typing import Optional, TypeAlias
@@ -30,6 +31,7 @@ class Quote(BaseModel):
 class QuotesModel(BaseModel):
     """List of Quotes from Zen Quotes."""
 
+    last_update: date
     today: list[Quote]
     quotes: list[Quote]
 
@@ -42,6 +44,14 @@ class Quotes:
 
     def __init__(self) -> None:
         self.quotes: Optional[QuotesModel] = None
+
+    def is_update_required(self) -> bool:
+        """Return True if request of new quotes are required."""
+        if self.quotes and self.quotes.last_update < date.today():
+            return True
+        if not self.quotes:
+            return True
+        return False
 
     def read(self) -> None:
         """Read quotes from JSON file.
@@ -105,14 +115,16 @@ class Quotes:
             f.write(self.quotes.model_dump_json(indent=4))
 
     def run(self) -> None:
-        """Request quotes & write to JSON on success."""
+        """Read from local JSON file & update if required."""
         self.read()
 
-        if not self.quotes:
+        if self.is_update_required():
             today = self.request(QuoteMode.TODAY)
             quotes = self.request(QuoteMode.QUOTES)
             if today and quotes:
-                self.quotes = QuotesModel(today=today, quotes=quotes)
+                self.quotes = QuotesModel(
+                    last_update=date.today(), today=today, quotes=quotes
+                )
                 self.write()
 
 
