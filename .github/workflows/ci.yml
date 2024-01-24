@@ -1,6 +1,61 @@
 name: CI
 on: push
 jobs:
+  python:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Get Python version
+        run: python --version
+      - name: Install packages
+        run: |
+          pip install --requirement ./requirements-dev.txt
+          black --version
+          pylint --version
+          mypy --version
+          isort --version
+      - name: Install Bash (macOS)
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew update
+          brew install bash
+      - name: Get Bash version
+        run: bash --version
+      - name: Run Black
+        shell: bash
+        run: |
+          source ./git-hooks/src/ci.sh
+          run_ci_python_black
+      - name: Run Pylint
+        shell: bash
+        run: |
+          source ./git-hooks/src/ci.sh
+          run_ci_python_pylint
+      - name: Run mypy
+        shell: bash
+        run: |
+          source ./git-hooks/src/ci.sh
+          run_ci_python_mypy
+      - name: Run isort
+        shell: bash
+        run: |
+          source ./git-hooks/src/ci.sh
+          run_ci_python_isort
+      - name: Run unittest
+        shell: bash
+        run: |
+          source ./git-hooks/src/ci.sh
+          run_ci_python_unittest
   bash:
     strategy:
       matrix:
