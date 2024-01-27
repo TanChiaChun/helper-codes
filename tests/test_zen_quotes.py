@@ -2,6 +2,7 @@ import logging
 import unittest
 from datetime import date, timedelta
 from io import StringIO
+from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
 
 import requests
@@ -53,7 +54,7 @@ class TestQuotes(unittest.TestCase):
             f"{QUOTES[0]['q']} - {QUOTES[0]['a']}\n"
             "\n"
             "RANDOM:\n"
-            f"{QUOTES[1]['q']} - {QUOTES[1]['a']}\n"
+            f"{QUOTES[1]['q']} - {QUOTES[1]['a']}"
             "\n"
         )
         with patch(
@@ -96,7 +97,10 @@ class TestQuotesRead(unittest.TestCase):
             quotes.read()
             self.assertEqual(
                 logger_obj.records[0].getMessage(),
-                "Output file not found: output/zen_quotes.json",
+                (
+                    "Output file not found: "
+                    f"{Path(quotes.OUTPUT_DIR, 'zen_quotes.json').as_posix()}"
+                ),
             )
         self.assertIsNone(quotes.quotes)
 
@@ -112,7 +116,10 @@ class TestQuotesRead(unittest.TestCase):
             quotes.read()
             self.assertEqual(
                 logger_obj.records[0].getMessage(),
-                "Error parsing output file: output/zen_quotes.json",
+                (
+                    "Error parsing output file: "
+                    f"{Path(quotes.OUTPUT_DIR, 'zen_quotes.json').as_posix()}"
+                ),
             )
         self.assertIsNone(quotes.quotes)
 
@@ -195,7 +202,7 @@ class TestModule(unittest.TestCase):
             f"{QUOTES[0]['q']} - {QUOTES[0]['a']}\n"
             "\n"
             "RANDOM:\n"
-            f"{QUOTES[1]['q']} - {QUOTES[1]['a']}\n"
+            f"{QUOTES[1]['q']} - {QUOTES[1]['a']}"
             "\n"
         )
 
