@@ -2,6 +2,7 @@ import logging
 import unittest
 from datetime import date, timedelta
 from io import StringIO
+from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
 
 import requests
@@ -96,7 +97,10 @@ class TestQuotesRead(unittest.TestCase):
             quotes.read()
             self.assertEqual(
                 logger_obj.records[0].getMessage(),
-                f"Output file not found: {quotes.OUTPUT_DIR}/zen_quotes.json",
+                (
+                    "Output file not found: "
+                    f"{Path(quotes.OUTPUT_DIR, 'zen_quotes.json').as_posix()}"
+                ),
             )
         self.assertIsNone(quotes.quotes)
 
@@ -114,7 +118,7 @@ class TestQuotesRead(unittest.TestCase):
                 logger_obj.records[0].getMessage(),
                 (
                     "Error parsing output file: "
-                    f"{quotes.OUTPUT_DIR}/zen_quotes.json"
+                    f"{Path(quotes.OUTPUT_DIR, 'zen_quotes.json').as_posix()}"
                 ),
             )
         self.assertIsNone(quotes.quotes)
