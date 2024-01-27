@@ -65,7 +65,6 @@ class Quotes:
             print("")
             print("RANDOM:")
             print(choice(self.quotes.quotes))
-            print("")
 
     def read(self) -> None:
         """Read quotes from JSON file.

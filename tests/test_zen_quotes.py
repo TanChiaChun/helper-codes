@@ -53,7 +53,7 @@ class TestQuotes(unittest.TestCase):
             f"{QUOTES[0]['q']} - {QUOTES[0]['a']}\n"
             "\n"
             "RANDOM:\n"
-            f"{QUOTES[1]['q']} - {QUOTES[1]['a']}\n"
+            f"{QUOTES[1]['q']} - {QUOTES[1]['a']}"
             "\n"
         )
         with patch(
@@ -198,7 +198,7 @@ class TestModule(unittest.TestCase):
             f"{QUOTES[0]['q']} - {QUOTES[0]['a']}\n"
             "\n"
             "RANDOM:\n"
-            f"{QUOTES[1]['q']} - {QUOTES[1]['a']}\n"
+            f"{QUOTES[1]['q']} - {QUOTES[1]['a']}"
             "\n"
         )
 
