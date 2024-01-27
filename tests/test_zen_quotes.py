@@ -96,7 +96,7 @@ class TestQuotesRead(unittest.TestCase):
             quotes.read()
             self.assertEqual(
                 logger_obj.records[0].getMessage(),
-                "Output file not found: output/zen_quotes.json",
+                f"Output file not found: {quotes.OUTPUT_DIR}/zen_quotes.json",
             )
         self.assertIsNone(quotes.quotes)
 
@@ -112,7 +112,10 @@ class TestQuotesRead(unittest.TestCase):
             quotes.read()
             self.assertEqual(
                 logger_obj.records[0].getMessage(),
-                "Error parsing output file: output/zen_quotes.json",
+                (
+                    "Error parsing output file: "
+                    f"{quotes.OUTPUT_DIR}/zen_quotes.json"
+                ),
             )
         self.assertIsNone(quotes.quotes)
 
