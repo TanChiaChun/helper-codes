@@ -17,23 +17,8 @@ set_alias() {
     alias shfmtw=run_ci_bash_shfmt_write
 }
 
-source_git_hooks_ci() {
-    if [[ -f './git-hooks/src/ci.sh' ]]; then
-        # shellcheck source=/dev/null
-        source './git-hooks/src/ci.sh'
-
-        echo 'Loaded git-hooks ci'
-    fi
-}
-
 main() {
-    echo '##################################################'
-
     set_alias
-    source_git_hooks_ci
-
-    echo 'Loaded bash_alias'
-    echo '##################################################'
 }
 
 main
