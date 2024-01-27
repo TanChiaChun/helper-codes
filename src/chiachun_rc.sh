@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+print_welcome_message() {
+    cat <<"EOF"
+__      __   _                     ___ _    _         ___ _             
+\ \    / /__| |__ ___ _ __  ___   / __| |_ (_)__ _   / __| |_ _  _ _ _  
+ \ \/\/ / -_) / _/ _ \ '  \/ -_) | (__| ' \| / _` | | (__| ' \ || | ' \ 
+  \_/\_/\___|_\__\___/_|_|_\___|  \___|_||_|_\__,_|  \___|_||_\_,_|_||_|
+EOF
+}
+
 run_zen_quotes() {
     local py_path
     py_path="$(get_venv_bin_path ~/'repo/_packages')/python"
@@ -47,6 +56,7 @@ main() {
     source_bash_alias
     source_git_hooks_ci
 
+    print_welcome_message
     echo ''
     run_zen_quotes
     echo '##################################################'
