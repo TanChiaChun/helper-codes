@@ -36,7 +36,7 @@ source_git_hooks_ci() {
 }
 
 source_py_sh() {
-    local py_sh_path=~/'repo/git-hooks/src/py.sh'
+    local py_sh_path=~/'repo/helper-codes/git-hooks/src/py.sh'
 
     if [[ ! -f "$py_sh_path" ]]; then
         echo "$py_sh_path not found"
