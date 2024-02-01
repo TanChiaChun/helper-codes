@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
 
 import requests
+
 from zen_quotes.zen_quotes import Quote, QuoteMode, Quotes, QuotesModel, logger
 
 QUOTES = [
