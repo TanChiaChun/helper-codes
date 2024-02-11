@@ -46,13 +46,13 @@ setup() {
     [ "$output" == 'git-hooks ci not loaded' ]
 }
 
+@test "source_py_sh()" {
+    run source_py_sh '.'
+    [ "$status" -eq 0 ]
+}
+
 @test "source_py_sh_not_found()" {
     run source_py_sh "$BATS_TMPDIR"
     [ "$status" -eq 1 ]
     [ "$output" == "$BATS_TMPDIR/git-hooks/src/py.sh not found" ]
-}
-
-@test "source_py_sh()" {
-    run source_py_sh '.'
-    [ "$status" -eq 0 ]
 }
