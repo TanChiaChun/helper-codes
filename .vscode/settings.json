@@ -1,4 +1,7 @@
 {
+    "files.associations": {
+        "*.bats": "shellscript"
+    },
     "python.testing.unittestArgs": [
         "-v",
         "-s",
