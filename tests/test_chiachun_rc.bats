@@ -26,6 +26,12 @@ setup() {
     fi
 }
 
+@test "source_completion_pip()" {
+    run source_completion_pip
+    [ "$status" -eq 0 ]
+    [ "$output" == 'Loaded pip completion' ]
+}
+
 @test "source_git_hooks_ci_loaded()" {
     run source_git_hooks_ci
     [ "$status" -eq 0 ]

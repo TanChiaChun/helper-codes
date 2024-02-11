@@ -48,6 +48,18 @@ source_completion_git() {
     fi
 }
 
+source_completion_pip() {
+    local completion
+
+    # shellcheck source=/dev/null
+    if completion="$(python -m pip completion --bash)" &&
+        source <(echo "$completion"); then
+        echo 'Loaded pip completion'
+    else
+        echo 'pip completion not loaded'
+    fi
+}
+
 source_git_hooks_ci() {
     if [[ -f './git-hooks/src/ci.sh' ]]; then
         # shellcheck source=/dev/null
@@ -81,6 +93,7 @@ main() {
     source_git_hooks_ci
 
     source_completion_git
+    source_completion_pip
 
     print_welcome_message
     echo ''
