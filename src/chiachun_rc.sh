@@ -18,11 +18,15 @@ run_zen_quotes() {
 }
 
 source_bash_alias() {
-    if [[ -f ~/'repo/helper-codes/src/bash_alias.sh' ]]; then
+    local repo_dir="$1"
+
+    if [[ -f "$repo_dir/src/bash_alias.sh" ]]; then
         # shellcheck source=/dev/null
-        source ~/'repo/helper-codes/src/bash_alias.sh'
+        source "$repo_dir/src/bash_alias.sh"
 
         echo 'Loaded bash_alias'
+    else
+        echo 'bash_alias not loaded'
     fi
 }
 
@@ -32,28 +36,30 @@ source_git_hooks_ci() {
         source './git-hooks/src/ci.sh'
 
         echo 'Loaded git-hooks ci'
+    else
+        echo 'git-hooks ci not loaded'
     fi
 }
 
 source_py_sh() {
-    local py_sh_path=~/'repo/helper-codes/git-hooks/src/py.sh'
+    local repo_dir="$1"
 
-    if [[ ! -f "$py_sh_path" ]]; then
-        echo "$py_sh_path not found"
+    if [[ ! -f "$repo_dir/git-hooks/src/py.sh" ]]; then
+        echo "$repo_dir/git-hooks/src/py.sh not found"
         return 1
     fi
 
     # shellcheck source=/dev/null
-    source "$py_sh_path"
+    source "$repo_dir/git-hooks/src/py.sh"
 }
 
 main() {
     echo '##################################################'
-    if ! source_py_sh; then
+    if ! source_py_sh ~/'repo/helper-codes'; then
         return 1
     fi
 
-    source_bash_alias
+    source_bash_alias ~/'repo/helper-codes'
     source_git_hooks_ci
 
     print_welcome_message
@@ -62,4 +68,6 @@ main() {
     echo '##################################################'
 }
 
-main
+if [[ "$0" != *"bats-core"* ]]; then
+    main
+fi
