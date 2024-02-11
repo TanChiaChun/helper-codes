@@ -26,6 +26,7 @@ setup() {
     fi
 }
 
+# python expected to be installed by default
 @test "source_completion_pip()" {
     run source_completion_pip
     [ "$status" -eq 0 ]

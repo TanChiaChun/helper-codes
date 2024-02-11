@@ -30,6 +30,17 @@ source_bash_alias() {
     fi
 }
 
+source_bash_completion() {
+    # macOS
+    if [[ -r '/opt/homebrew/etc/profile.d/bash_completion.sh' ]]; then
+        # shellcheck source=/dev/null
+        source '/opt/homebrew/etc/profile.d/bash_completion.sh'
+    else
+        echo 'bash_completion not found'
+        return 1
+    fi
+}
+
 source_completion_git() {
     local git_path
     git_path="$(which git)"
@@ -57,6 +68,19 @@ source_completion_pip() {
         echo 'Loaded pip completion'
     else
         echo 'pip completion not loaded'
+    fi
+}
+
+source_completion_poetry() {
+    local completion
+
+    # shellcheck source=/dev/null
+    if source_bash_completion &&
+        completion="$(poetry completions bash)" &&
+        source <(echo "$completion"); then
+        echo 'Loaded Poetry completion'
+    else
+        echo 'Poetry completion not loaded'
     fi
 }
 
@@ -94,6 +118,7 @@ main() {
 
     source_completion_git
     source_completion_pip
+    source_completion_poetry
 
     print_welcome_message
     echo ''
