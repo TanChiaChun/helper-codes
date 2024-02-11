@@ -14,6 +14,18 @@ setup() {
     [ "$output" == 'bash_alias not loaded' ]
 }
 
+@test "source_completion_git()" {
+    if [[ "$OSTYPE" == 'darwin'* ]]; then
+        echo '# Run: macOS' >&3
+
+        run source_completion_git
+        [ "$status" -eq 0 ]
+        [ "$output" == 'Loaded Git completion' ]
+    else
+        echo "# Skip: $OSTYPE" >&3
+    fi
+}
+
 @test "source_git_hooks_ci_loaded()" {
     run source_git_hooks_ci
     [ "$status" -eq 0 ]
