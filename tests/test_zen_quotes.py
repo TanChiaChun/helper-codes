@@ -35,13 +35,18 @@ class TestQuote(unittest.TestCase):
 
 
 class TestQuotes(unittest.TestCase):
-    def test_is_update_required(self) -> None:
+    def test_is_update_required_false(self) -> None:
         quotes = Quotes()
-        self.assertIs(quotes.is_update_required(), True)
-
         quotes.quotes = QUOTES_MODEL
         self.assertIs(quotes.is_update_required(), False)
 
+    def test_is_update_required_true_empty_quotes(self) -> None:
+        quotes = Quotes()
+        self.assertIs(quotes.is_update_required(), True)
+
+    def test_is_update_required_true_outdated(self) -> None:
+        quotes = Quotes()
+        quotes.quotes = QUOTES_MODEL
         quotes.quotes.last_update -= timedelta(days=1)
         self.assertIs(quotes.is_update_required(), True)
 
