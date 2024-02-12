@@ -19,7 +19,7 @@ jobs:
         run: python --version
       - name: Install packages
         run: |
-          pip install --requirement ./requirements-dev.txt
+          pip install --requirement './requirements-dev.txt'
           black --version
           pylint --version
           mypy --version
@@ -34,27 +34,27 @@ jobs:
       - name: Run Black
         shell: bash
         run: |
-          source ./git-hooks/src/ci.sh
+          source './git-hooks/src/ci.sh'
           run_ci_python_black
       - name: Run Pylint
         shell: bash
         run: |
-          source ./git-hooks/src/ci.sh
+          source './git-hooks/src/ci.sh'
           run_ci_python_pylint
       - name: Run mypy
         shell: bash
         run: |
-          source ./git-hooks/src/ci.sh
+          source './git-hooks/src/ci.sh'
           run_ci_python_mypy
       - name: Run isort
         shell: bash
         run: |
-          source ./git-hooks/src/ci.sh
+          source './git-hooks/src/ci.sh'
           run_ci_python_isort
       - name: Run unittest
         shell: bash
         run: |
-          source ./git-hooks/src/ci.sh
+          source './git-hooks/src/ci.sh'
           run_ci_python_unittest
   bash:
     strategy:
@@ -105,17 +105,17 @@ jobs:
       - name: Run shfmt
         shell: bash
         run: |
-          source ./git-hooks/src/ci.sh
+          source './git-hooks/src/ci.sh'
           run_ci_bash_shfmt
       - name: Run ShellCheck
         shell: bash
         run: |
-          source ./git-hooks/src/ci.sh
+          source './git-hooks/src/ci.sh'
           run_ci_bash_shellcheck
       - name: Run Bats
         shell: bash
         run: |
-          source ./git-hooks/src/ci.sh
+          source './git-hooks/src/ci.sh'
           run_ci_bash_bats
   markdown:
     strategy:
@@ -141,5 +141,5 @@ jobs:
       - name: Run markdownlint
         shell: bash
         run: |
-          source ./git-hooks/src/ci.sh
+          source './git-hooks/src/ci.sh'
           run_ci_markdown
