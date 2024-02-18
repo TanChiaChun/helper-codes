@@ -24,9 +24,9 @@ source_bash_alias() {
         # shellcheck source=/dev/null
         source "$repo_dir/src/bash_alias.sh"
 
-        echo 'Loaded bash_alias'
+        echo 'Sourced bash_alias'
     else
-        echo 'bash_alias not loaded'
+        echo 'bash_alias not sourced'
     fi
 }
 
@@ -53,9 +53,9 @@ source_completion_git() {
         # shellcheck source=/dev/null
         source "$filename"
 
-        echo 'Loaded Git completion'
+        echo 'Sourced Git completion'
     else
-        echo 'Git completion not loaded'
+        echo 'Git completion not sourced'
     fi
 }
 
@@ -65,9 +65,9 @@ source_completion_pip() {
     # shellcheck source=/dev/null
     if completion="$(python -m pip completion --bash)" &&
         source <(echo "$completion"); then
-        echo 'Loaded pip completion'
+        echo 'Sourced pip completion'
     else
-        echo 'pip completion not loaded'
+        echo 'pip completion not sourced'
     fi
 }
 
@@ -78,9 +78,9 @@ source_completion_poetry() {
     if source_bash_completion &&
         completion="$(poetry completions bash)" &&
         source <(echo "$completion"); then
-        echo 'Loaded Poetry completion'
+        echo 'Sourced Poetry completion'
     else
-        echo 'Poetry completion not loaded'
+        echo 'Poetry completion not sourced'
     fi
 }
 
@@ -89,9 +89,9 @@ source_git_hooks_ci() {
         # shellcheck source=/dev/null
         source './git-hooks/src/ci.sh'
 
-        echo 'Loaded git-hooks ci'
+        echo 'Sourced git-hooks ci'
     else
-        echo 'git-hooks ci not loaded'
+        echo 'git-hooks ci not sourced'
     fi
 }
 

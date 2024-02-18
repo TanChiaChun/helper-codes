@@ -2,16 +2,16 @@ setup() {
     load '../src/chiachun_rc.sh'
 }
 
-@test "source_bash_alias_loaded()" {
+@test "source_bash_alias_sourced()" {
     run source_bash_alias '.'
     [ "$status" -eq 0 ]
-    [ "$output" == 'Loaded bash_alias' ]
+    [ "$output" == 'Sourced bash_alias' ]
 }
 
-@test "source_bash_alias_not_loaded()" {
+@test "source_bash_alias_not_sourced()" {
     run source_bash_alias "$BATS_TMPDIR"
     [ "$status" -eq 0 ]
-    [ "$output" == 'bash_alias not loaded' ]
+    [ "$output" == 'bash_alias not sourced' ]
 }
 
 @test "source_completion_git()" {
@@ -20,7 +20,7 @@ setup() {
 
         run source_completion_git
         [ "$status" -eq 0 ]
-        [ "$output" == 'Loaded Git completion' ]
+        [ "$output" == 'Sourced Git completion' ]
     else
         echo "# Skip: $OSTYPE" >&3
     fi
@@ -30,21 +30,21 @@ setup() {
 @test "source_completion_pip()" {
     run source_completion_pip
     [ "$status" -eq 0 ]
-    [ "$output" == 'Loaded pip completion' ]
+    [ "$output" == 'Sourced pip completion' ]
 }
 
-@test "source_git_hooks_ci_loaded()" {
+@test "source_git_hooks_ci_sourced()" {
     run source_git_hooks_ci
     [ "$status" -eq 0 ]
-    [[ "$output" =~ .+'Loaded git-hooks ci' ]]
+    [[ "$output" =~ .+'Sourced git-hooks ci' ]]
 }
 
-@test "source_git_hooks_ci_not_loaded()" {
+@test "source_git_hooks_ci_not_sourced()" {
     cd "$BATS_TMPDIR"
     run source_git_hooks_ci
     cd "$OLDPWD"
     [ "$status" -eq 0 ]
-    [ "$output" == 'git-hooks ci not loaded' ]
+    [ "$output" == 'git-hooks ci not sourced' ]
 }
 
 @test "source_py_sh()" {
