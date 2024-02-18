@@ -17,6 +17,30 @@ run_zen_quotes() {
     "$py_path" "$script_path"
 }
 
+set_django_env_var() {
+    local django_dir
+    if ! django_dir="$(get_env_value \
+        "$(get_first_env_var './.env' 'MY_DJANGO_PROJECT')")"; then
+        return 1
+    fi
+
+    local env_line
+    if ! env_line="$(grep --max-count=1 'DJANGO_SETTINGS_MODULE' \
+        "$django_dir/manage.py")"; then
+        return 1
+    fi
+
+    [[ "$env_line" =~ [^'"']+'"'([^'"']+)'"'[^'"']+'"'([^'"']+)'"' ]]
+    if [[ "${#BASH_REMATCH[@]}" -ne 3 ]]; then
+        return 1
+    fi
+    local key="${BASH_REMATCH[1]}"
+    local value="${BASH_REMATCH[2]}"
+
+    export "$key"="$value"
+    echo "Set $key to $value"
+}
+
 source_bash_alias() {
     local repo_dir="$1"
 
@@ -119,6 +143,12 @@ main() {
     source_completion_git
     source_completion_pip
     source_completion_poetry
+
+    if (is_django_project); then
+        if ! set_django_env_var; then
+            echo 'Django environment variables not set'
+        fi
+    fi
 
     print_welcome_message
     echo ''
