@@ -17,6 +17,30 @@ run_zen_quotes() {
     "$py_path" "$script_path"
 }
 
+set_django_env_var() {
+    local django_dir
+    if ! django_dir="$(get_env_value \
+        "$(get_first_env_var './.env' 'MY_DJANGO_PROJECT')")"; then
+        return 1
+    fi
+
+    local env_line
+    if ! env_line="$(grep --max-count=1 'DJANGO_SETTINGS_MODULE' \
+        "$django_dir/manage.py")"; then
+        return 1
+    fi
+
+    [[ "$env_line" =~ [^'"']+'"'([^'"']+)'"'[^'"']+'"'([^'"']+)'"' ]]
+    if [[ "${#BASH_REMATCH[@]}" -ne 3 ]]; then
+        return 1
+    fi
+    local key="${BASH_REMATCH[1]}"
+    local value="${BASH_REMATCH[2]}"
+
+    export "$key"="$value"
+    echo "Set $key to $value"
+}
+
 source_bash_alias() {
     local repo_dir="$1"
 
@@ -24,9 +48,9 @@ source_bash_alias() {
         # shellcheck source=/dev/null
         source "$repo_dir/src/bash_alias.sh"
 
-        echo 'Loaded bash_alias'
+        echo 'Sourced bash_alias'
     else
-        echo 'bash_alias not loaded'
+        echo 'bash_alias not sourced'
     fi
 }
 
@@ -53,9 +77,9 @@ source_completion_git() {
         # shellcheck source=/dev/null
         source "$filename"
 
-        echo 'Loaded Git completion'
+        echo 'Sourced Git completion'
     else
-        echo 'Git completion not loaded'
+        echo 'Git completion not sourced'
     fi
 }
 
@@ -65,9 +89,9 @@ source_completion_pip() {
     # shellcheck source=/dev/null
     if completion="$(python -m pip completion --bash)" &&
         source <(echo "$completion"); then
-        echo 'Loaded pip completion'
+        echo 'Sourced pip completion'
     else
-        echo 'pip completion not loaded'
+        echo 'pip completion not sourced'
     fi
 }
 
@@ -78,9 +102,9 @@ source_completion_poetry() {
     if source_bash_completion &&
         completion="$(poetry completions bash)" &&
         source <(echo "$completion"); then
-        echo 'Loaded Poetry completion'
+        echo 'Sourced Poetry completion'
     else
-        echo 'Poetry completion not loaded'
+        echo 'Poetry completion not sourced'
     fi
 }
 
@@ -89,9 +113,9 @@ source_git_hooks_ci() {
         # shellcheck source=/dev/null
         source './git-hooks/src/ci.sh'
 
-        echo 'Loaded git-hooks ci'
+        echo 'Sourced git-hooks ci'
     else
-        echo 'git-hooks ci not loaded'
+        echo 'git-hooks ci not sourced'
     fi
 }
 
@@ -119,6 +143,12 @@ main() {
     source_completion_git
     source_completion_pip
     source_completion_poetry
+
+    if (is_django_project); then
+        if ! set_django_env_var; then
+            echo 'Django environment variables not set'
+        fi
+    fi
 
     print_welcome_message
     echo ''
