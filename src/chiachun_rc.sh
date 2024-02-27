@@ -121,9 +121,7 @@ main() {
     source_completion_poetry
 
     if (is_django_project); then
-        if ! set_django_env_var; then
-            echo 'Django environment variables not set'
-        fi
+        set_django_env_var
     fi
 
     print_welcome_message
