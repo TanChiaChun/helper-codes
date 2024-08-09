@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
           source './git-hooks/src/ci.sh'
-          run_ci_python_unittest
+          run_ci_python_test_unittest
   bash:
     strategy:
       matrix:
