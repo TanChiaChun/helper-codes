@@ -13,6 +13,7 @@ set_alias() {
     alias mdc=run_ci_markdown
     alias py=python
     alias pyc=run_ci_python
+    alias pycov=run_ci_python_test_coverage_py
     alias shc=run_ci_bash
     alias shfmtw=run_ci_bash_shfmt_write
 }
