@@ -107,6 +107,12 @@ jobs:
           brew install bash
       - name: Get Bash version
         run: bash --version
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Get Python version
+        run: python --version
       - name: Run shfmt
         shell: bash
         run: |
@@ -151,6 +157,12 @@ jobs:
           brew install bash
       - name: Get Bash version
         run: bash --version
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Get Python version
+        run: python --version
       - name: Run markdownlint
         shell: bash
         run: |
