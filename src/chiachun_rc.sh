@@ -12,7 +12,7 @@ EOF
 run_zen_quotes() {
     local py_path
     py_path="$(get_venv_bin_path ~/'repo/_packages')/python"
-    local script_path=~/'repo/helper-codes/src/zen_quotes/zen_quotes.py'
+    local script_path=~/'repo/helper-codes/src/zen_quotes/main.py'
 
     "$py_path" "$script_path"
 }

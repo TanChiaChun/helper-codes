@@ -7,7 +7,7 @@ from unittest.mock import Mock, mock_open, patch
 
 import requests
 
-from zen_quotes.zen_quotes import Quote, QuoteMode, Quotes, QuotesModel, logger
+from zen_quotes.main import Quote, QuoteMode, Quotes, QuotesModel, logger
 
 QUOTES = [
     {
@@ -64,7 +64,7 @@ class TestQuotes(unittest.TestCase):
             "\n"
         )
         with patch(
-            "zen_quotes.zen_quotes.choice",
+            "zen_quotes.main.choice",
             new=Mock(return_value=quotes.quotes.quotes[1]),
         ):
             quotes.print()
@@ -73,7 +73,7 @@ class TestQuotes(unittest.TestCase):
     @patch("sys.stdout", new_callable=StringIO)
     def test_run_print_only(self, mock_stdout: StringIO) -> None:
         with patch(
-            "zen_quotes.zen_quotes.open",
+            "zen_quotes.main.open",
             new=Mock(side_effect=FileNotFoundError),
         ), patch(
             "requests.get", new=Mock(side_effect=requests.ConnectionError)
@@ -87,9 +87,7 @@ class TestQuotesRead(unittest.TestCase):
         read_data = QUOTES_MODEL.model_dump_json(indent=4)
 
         quotes = Quotes()
-        with patch(
-            "zen_quotes.zen_quotes.open", new=mock_open(read_data=read_data)
-        ):
+        with patch("zen_quotes.main.open", new=mock_open(read_data=read_data)):
             quotes.read()
         assert quotes.quotes is not None
         self.assertEqual(quotes.quotes.model_dump_json(indent=4), read_data)
@@ -97,7 +95,7 @@ class TestQuotesRead(unittest.TestCase):
     def test_read_file_not_found(self) -> None:
         quotes = Quotes()
         with patch(
-            "zen_quotes.zen_quotes.open",
+            "zen_quotes.main.open",
             new=Mock(side_effect=FileNotFoundError),
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
             quotes.read()
@@ -116,7 +114,7 @@ class TestQuotesRead(unittest.TestCase):
 
         quotes = Quotes()
         with patch(
-            "zen_quotes.zen_quotes.open",
+            "zen_quotes.main.open",
             new=mock_open(read_data=read_data),
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
             quotes.read()
@@ -213,9 +211,9 @@ class TestModule(unittest.TestCase):
         )
 
         with patch(
-            "zen_quotes.zen_quotes.open", new=mock_open(read_data=read_data)
+            "zen_quotes.main.open", new=mock_open(read_data=read_data)
         ), patch(
-            "zen_quotes.zen_quotes.choice",
+            "zen_quotes.main.choice",
             new=Mock(return_value=QUOTES_MODEL.quotes[1]),
         ):
             Quotes().run()
