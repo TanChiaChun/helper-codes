@@ -5,12 +5,10 @@ from datetime import date
 from enum import Enum
 from pathlib import Path
 from random import choice
-from typing import Optional, TypeAlias
+from typing import Optional
 
 import requests
 from pydantic import BaseModel, ValidationError
-
-QuoteType: TypeAlias = dict[str, str]
 
 logger = logging.getLogger(__name__)
 
