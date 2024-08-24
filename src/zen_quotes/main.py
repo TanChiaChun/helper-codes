@@ -41,8 +41,8 @@ class QuotesModel(BaseModel):
 class Quotes:
     """List of Quotes from Zen Quotes."""
 
-    OUTPUT_DIR = Path(Path(__file__).parent.parent.parent, Path("output"))
-    OUTPUT_FILE = Path(OUTPUT_DIR, "zen_quotes.json")
+    OUTPUT_DIR = Path(__file__).parent.parent.parent / "output"
+    OUTPUT_FILE = OUTPUT_DIR / "zen_quotes.json"
 
     def __init__(self) -> None:
         self.quotes: Optional[QuotesModel] = None
