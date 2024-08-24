@@ -147,15 +147,10 @@ class Quotes:
         self.print()
 
 
-def configure_logger() -> None:
-    """Configure logger."""
-    logger.setLevel(logging.WARNING)
-    logger.addHandler(logging.StreamHandler())
-
-
 def main() -> None:
     """Main function."""
-    configure_logger()
+    logging.basicConfig()
+
     Quotes().run()
 
 
