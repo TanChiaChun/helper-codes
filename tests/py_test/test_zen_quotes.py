@@ -99,12 +99,15 @@ class TestQuotesRead(unittest.TestCase):
             new=Mock(side_effect=FileNotFoundError),
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
             quotes.read()
+
+            output_file = (
+                Path(__file__).parent.parent.parent
+                / "output"
+                / "zen_quotes.json"
+            )
             self.assertEqual(
                 logger_obj.records[0].getMessage(),
-                (
-                    "Output file not found: "
-                    f"{Path(quotes.OUTPUT_DIR, 'zen_quotes.json').as_posix()}"
-                ),
+                f"Output file not found: {output_file.as_posix()}",
             )
         self.assertIsNone(quotes.quotes)
 
@@ -118,12 +121,15 @@ class TestQuotesRead(unittest.TestCase):
             new=mock_open(read_data=read_data),
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
             quotes.read()
+
+            output_file = (
+                Path(__file__).parent.parent.parent
+                / "output"
+                / "zen_quotes.json"
+            )
             self.assertEqual(
                 logger_obj.records[0].getMessage(),
-                (
-                    "Error parsing output file: "
-                    f"{Path(quotes.OUTPUT_DIR, 'zen_quotes.json').as_posix()}"
-                ),
+                f"Error parsing output file: {output_file.as_posix()}",
             )
         self.assertIsNone(quotes.quotes)
 

@@ -41,8 +41,8 @@ class QuotesModel(BaseModel):
 class Quotes:
     """List of Quotes from Zen Quotes."""
 
-    OUTPUT_DIR = Path(__file__).parent.parent.parent / "output"
-    OUTPUT_FILE = OUTPUT_DIR / "zen_quotes.json"
+    _OUTPUT_DIR = Path(__file__).parent.parent.parent / "output"
+    _OUTPUT_FILE = _OUTPUT_DIR / "zen_quotes.json"
 
     def __init__(self) -> None:
         self.quotes: Optional[QuotesModel] = None
@@ -70,11 +70,11 @@ class Quotes:
         Skip if file not found or error parsing JSON.
         """
         try:
-            with open(self.OUTPUT_FILE, encoding="utf8") as f:
+            with open(self._OUTPUT_FILE, encoding="utf8") as f:
                 j = f.read()
         except FileNotFoundError:
             logger.warning(
-                "Output file not found: %s", self.OUTPUT_FILE.as_posix()
+                "Output file not found: %s", self._OUTPUT_FILE.as_posix()
             )
             return
 
@@ -82,7 +82,7 @@ class Quotes:
             self.quotes = QuotesModel.model_validate_json(j)
         except ValidationError:
             logger.warning(
-                "Error parsing output file: %s", self.OUTPUT_FILE.as_posix()
+                "Error parsing output file: %s", self._OUTPUT_FILE.as_posix()
             )
 
     def request(self, quote_mode: QuoteMode) -> Optional[list[Quote]]:
@@ -123,10 +123,10 @@ class Quotes:
         if not self.quotes:
             return
 
-        if not self.OUTPUT_DIR.is_dir():
-            self.OUTPUT_DIR.mkdir()
+        if not self._OUTPUT_DIR.is_dir():
+            self._OUTPUT_DIR.mkdir()
 
-        with open(self.OUTPUT_FILE, mode="w", encoding="utf8") as f:
+        with open(self._OUTPUT_FILE, mode="w", encoding="utf8") as f:
             f.write(self.quotes.model_dump_json(indent=4))
 
     def run(self) -> None:
