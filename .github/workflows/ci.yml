@@ -5,166 +5,23 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v4
-        with:
-          submodules: 'true'
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-      - name: Get Python version
-        run: python --version
-      - name: Install packages
-        run: |
-          pip install --requirement './requirements-dev.txt'
-          black --version
-          pylint --version
-          mypy --version
-          isort --version
-      - name: Install Bash (macOS)
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          brew update
-          brew install bash
-      - name: Get Bash version
-        run: bash --version
-      - name: Run Black
-        shell: bash
-        run: |
-          source './git-hooks/src/ci.sh'
-          run_ci_python_black
-      - name: Run Pylint
-        shell: bash
-        run: |
-          source './git-hooks/src/ci.sh'
-          run_ci_python_pylint
-      - name: Run mypy
-        shell: bash
-        run: |
-          source './git-hooks/src/ci.sh'
-          run_ci_python_mypy
-      - name: Run isort
-        shell: bash
-        run: |
-          source './git-hooks/src/ci.sh'
-          run_ci_python_isort
-      - name: Run unittest
-        shell: bash
-        run: |
-          source './git-hooks/src/ci.sh'
-          run_ci_python_test_unittest
+    uses: TanChiaChun/git-hooks/.github/workflows/workflows-python.yml@main
+    with:
+      os: ${{ matrix.os }}
+      submodules: true
   bash:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Set Git autocrlf (Windows)
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: git config --global core.autocrlf input
-      - name: Check out repository code
-        uses: actions/checkout@v4
-        with:
-          submodules: 'true'
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 'stable'
-          cache: false
-      - name: Install shfmt
-        run: |
-          go install mvdan.cc/sh/v3/cmd/shfmt@latest
-          shfmt --version
-      - name: Install ShellCheck (macOS)
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          brew update
-          brew install shellcheck
-      - name: Install ShellCheck (Windows)
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: choco install shellcheck
-      - name: Get ShellCheck version
-        run: shellcheck --version
-      - name: Add npm local bin directory to GitHub Path (non-Windows)
-        if: ${{ matrix.os != 'windows-latest' }}
-        run: echo "$PWD/node_modules/.bin" >> $GITHUB_PATH
-      - name: Add npm local bin directory to GitHub Path (Windows)
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: >
-          "$PWD/node_modules/.bin"
-          | Out-File -FilePath $env:GITHUB_PATH -Append
-      - name: Install Bats
-        run: |
-          npm install bats
-          bats --version
-      - name: Install Bash (macOS)
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          brew update
-          brew install bash
-      - name: Get Bash version
-        run: bash --version
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-      - name: Get Python version
-        run: python --version
-      - name: Run shfmt
-        shell: bash
-        run: |
-          source './git-hooks/src/ci.sh'
-          run_ci_bash_shfmt
-      - name: Run ShellCheck
-        shell: bash
-        run: |
-          source './git-hooks/src/ci.sh'
-          run_ci_bash_shellcheck
-      - name: Run Bats
-        shell: bash
-        run: |
-          source './git-hooks/src/ci.sh'
-          run_ci_bash_bats
+    uses: TanChiaChun/git-hooks/.github/workflows/workflows-bash.yml@main
+    with:
+      os: ${{ matrix.os }}
+      submodules: true
   markdown:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v4
-        with:
-          submodules: 'true'
-      - name: Add npm local bin directory to GitHub Path (non-Windows)
-        if: ${{ matrix.os != 'windows-latest' }}
-        run: echo "$PWD/node_modules/.bin" >> $GITHUB_PATH
-      - name: Add npm local bin directory to GitHub Path (Windows)
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: >
-          "$PWD/node_modules/.bin"
-          | Out-File -FilePath $env:GITHUB_PATH -Append
-      - name: Install markdownlint
-        run: |
-          npm install markdownlint-cli
-          markdownlint --version
-      - name: Install Bash (macOS)
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          brew update
-          brew install bash
-      - name: Get Bash version
-        run: bash --version
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-      - name: Get Python version
-        run: python --version
-      - name: Run markdownlint
-        shell: bash
-        run: |
-          source './git-hooks/src/ci.sh'
-          run_ci_markdown
+    uses: TanChiaChun/git-hooks/.github/workflows/workflows-markdown.yml@main
+    with:
+      os: ${{ matrix.os }}
+      submodules: true
