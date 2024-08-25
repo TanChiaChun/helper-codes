@@ -83,7 +83,7 @@ class TestQuotes(unittest.TestCase):
 
 
 class TestQuotesRead(unittest.TestCase):
-    def test_read(self) -> None:
+    def test_pass(self) -> None:
         read_data = QUOTES_MODEL.model_dump_json(indent=4)
 
         quotes = Quotes()
@@ -92,7 +92,7 @@ class TestQuotesRead(unittest.TestCase):
         assert quotes.quotes is not None
         self.assertEqual(quotes.quotes.model_dump_json(indent=4), read_data)
 
-    def test_read_file_not_found(self) -> None:
+    def test_file_not_found(self) -> None:
         quotes = Quotes()
         with patch(
             "zen_quotes.main.open",
@@ -111,7 +111,7 @@ class TestQuotesRead(unittest.TestCase):
             )
         self.assertIsNone(quotes.quotes)
 
-    def test_read_invalid_json(self) -> None:
+    def test_invalid_json(self) -> None:
         read_data = QUOTES_MODEL.model_dump_json(indent=4)
         read_data = read_data.replace("today", "oday", 1)
 
