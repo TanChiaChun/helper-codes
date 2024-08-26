@@ -25,6 +25,7 @@ QUOTES_MODEL = QuotesModel(
     today=[Quote(quote=QUOTES[0]["q"], author=QUOTES[0]["a"])],
     quotes=[Quote(quote=quote["q"], author=quote["a"]) for quote in QUOTES],
 )
+QUOTES_MODEL_JSON_STR = QUOTES_MODEL.model_dump_json(indent=4)
 
 
 class TestQuote(unittest.TestCase):
@@ -85,7 +86,7 @@ class TestQuotes(unittest.TestCase):
 
 class TestQuotesRead(unittest.TestCase):
     def test_pass(self) -> None:
-        read_data = QUOTES_MODEL.model_dump_json(indent=4)
+        read_data = QUOTES_MODEL_JSON_STR
 
         quotes = Quotes()
         with patch("zen_quotes.main.open", new=mock_open(read_data=read_data)):
@@ -113,7 +114,7 @@ class TestQuotesRead(unittest.TestCase):
         self.assertIsNone(quotes.quotes)
 
     def test_invalid_json(self) -> None:
-        read_data = QUOTES_MODEL.model_dump_json(indent=4)
+        read_data = QUOTES_MODEL_JSON_STR
         read_data = read_data.replace("today", "oday", 1)
 
         quotes = Quotes()
@@ -161,10 +162,7 @@ class TestQuotesRequest(unittest.TestCase):
         ):
             self.assertEqual(
                 Quotes().request(QuoteMode.QUOTES),
-                [
-                    Quote(quote=quote["q"], author=quote["a"])
-                    for quote in QUOTES
-                ],
+                QUOTES_MODEL.quotes,
             )
 
     def test_request_quote_connection_error(self) -> None:
@@ -207,7 +205,7 @@ class TestQuotesRequest(unittest.TestCase):
 class TestModule(unittest.TestCase):
     @patch("sys.stdout", new_callable=StringIO)
     def test_main(self, mock_stdout: StringIO) -> None:
-        read_data = QUOTES_MODEL.model_dump_json(indent=4)
+        read_data = QUOTES_MODEL_JSON_STR
         expected = (
             "TODAY:\n"
             f"{QUOTES[0]['q']} - {QUOTES[0]['a']}\n"
