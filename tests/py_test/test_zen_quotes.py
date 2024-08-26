@@ -1,3 +1,4 @@
+import copy
 import logging
 import unittest
 from datetime import date, timedelta
@@ -46,7 +47,7 @@ class TestQuotes(unittest.TestCase):
 
     def test_is_update_required_true_outdated(self) -> None:
         quotes = Quotes()
-        quotes.quotes = QUOTES_MODEL
+        quotes.quotes = copy.copy(QUOTES_MODEL)
         quotes.quotes.last_update -= timedelta(days=1)
         self.assertIs(quotes.is_update_required(), True)
 
