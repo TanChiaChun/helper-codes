@@ -105,11 +105,9 @@ class Quotes:
 
     def is_update_required(self) -> bool:
         """Return True if request of new quotes are required."""
-        if self.quotes and self.quotes.last_update < date.today():
-            return True
-        if not self.quotes:
-            return True
-        return False
+        if self.quotes and self.quotes.last_update == date.today():
+            return False
+        return True
 
     def print(self) -> None:
         """Print TODAY quote and 1 quote randomly from QUOTES."""
