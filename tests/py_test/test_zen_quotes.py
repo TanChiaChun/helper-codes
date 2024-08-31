@@ -259,7 +259,6 @@ class TestQuotesRequest(unittest.TestCase):
 class TestModule(unittest.TestCase):
     @patch("sys.stdout", new_callable=StringIO)
     def test_main(self, mock_stdout: StringIO) -> None:
-        read_data = QUOTES_MODEL_JSON_STR
         expected = (
             "TODAY:\n"
             f"{QUOTES[0]['q']} - {QUOTES[0]['a']}\n"
@@ -270,7 +269,8 @@ class TestModule(unittest.TestCase):
         )
 
         with patch(
-            "zen_quotes.main.open", new=mock_open(read_data=read_data)
+            "zen_quotes.main.open",
+            new=mock_open(read_data=QUOTES_MODEL_JSON_STR),
         ), patch(
             "zen_quotes.main.choice",
             new=Mock(return_value=QUOTES_MODEL.quotes[1]),
