@@ -6,7 +6,7 @@ import unittest
 from datetime import date, timedelta
 from io import StringIO
 from pathlib import Path
-from unittest.mock import Mock, mock_open, patch
+from unittest.mock import Mock, patch
 
 import requests
 from pydantic import ValidationError
@@ -74,8 +74,8 @@ class TestQuotesStorage(unittest.TestCase):
 class TestQuotesStorageRead(unittest.TestCase):
     def test_pass(self) -> None:
         with patch(
-            "zen_quotes.main.open",
-            new=mock_open(read_data=QUOTES_MODEL_JSON_STR),
+            "pathlib.Path.read_text",
+            new=Mock(return_value=QUOTES_MODEL_JSON_STR),
         ):
             quotes = QuotesStorage.read()
         self.assertEqual(
@@ -84,7 +84,7 @@ class TestQuotesStorageRead(unittest.TestCase):
 
     def test_file_not_found(self) -> None:
         with patch(
-            "zen_quotes.main.open",
+            "pathlib.Path.read_text",
             new=Mock(side_effect=FileNotFoundError),
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
             with self.assertRaises(FileNotFoundError):
@@ -105,8 +105,7 @@ class TestQuotesStorageRead(unittest.TestCase):
         read_data = read_data.replace("today", "oday", 1)
 
         with patch(
-            "zen_quotes.main.open",
-            new=mock_open(read_data=read_data),
+            "pathlib.Path.read_text", new=Mock(return_value=read_data)
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
             with self.assertRaises(ValidationError):
                 QuotesStorage.read()
@@ -131,12 +130,12 @@ class TestQuotes(unittest.TestCase):
             self.quotes = Quotes()
 
     @patch(
-        "zen_quotes.main.open", new=mock_open(read_data=QUOTES_MODEL_JSON_STR)
+        "pathlib.Path.read_text", new=Mock(return_value=QUOTES_MODEL_JSON_STR)
     )
     def test_init_quotes_exist(self) -> None:
         self.assertIsNotNone(Quotes().quotes)
 
-    @patch("zen_quotes.main.open", new=Mock(side_effect=FileNotFoundError))
+    @patch("pathlib.Path.read_text", new=Mock(side_effect=FileNotFoundError))
     def test_init_quotes_none(self) -> None:
         self.assertIsNone(Quotes().quotes)
 
@@ -266,8 +265,8 @@ class TestModule(unittest.TestCase):
         )
 
         with patch(
-            "zen_quotes.main.open",
-            new=mock_open(read_data=QUOTES_MODEL_JSON_STR),
+            "pathlib.Path.read_text",
+            new=Mock(return_value=QUOTES_MODEL_JSON_STR),
         ), patch(
             "zen_quotes.main.choice",
             new=Mock(return_value=QUOTES_MODEL.quotes[1]),

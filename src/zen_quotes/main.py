@@ -58,8 +58,7 @@ class QuotesStorage:
                 Error parsing output file.
         """
         try:
-            with open(cls._OUTPUT_FILE, encoding="utf8") as f:
-                j = f.read()
+            j = cls._OUTPUT_FILE.read_text(encoding="utf8")
         except FileNotFoundError:
             logger.warning(
                 "Output file not found: %s", cls._OUTPUT_FILE.as_posix()
@@ -89,8 +88,9 @@ class QuotesStorage:
         if not cls._OUTPUT_DIR.is_dir():
             cls._OUTPUT_DIR.mkdir()
 
-        with open(cls._OUTPUT_FILE, mode="w", encoding="utf8") as f:
-            f.write(quotes.model_dump_json(indent=4))
+        cls._OUTPUT_FILE.write_text(
+            quotes.model_dump_json(indent=4), encoding="utf8"
+        )
 
 
 class Quotes:
