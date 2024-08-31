@@ -47,6 +47,8 @@ class Quotes:
     def __init__(self) -> None:
         self.quotes: Optional[QuotesModel] = None
 
+        self.read()
+
     def is_update_required(self) -> bool:
         """Return True if request of new quotes are required."""
         if self.quotes and self.quotes.last_update < date.today():
@@ -131,8 +133,6 @@ class Quotes:
 
     def run(self) -> None:
         """Read from local JSON file & update if required."""
-        self.read()
-
         if self.is_update_required():
             print("Requesting new quotes")
 

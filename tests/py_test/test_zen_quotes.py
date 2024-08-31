@@ -37,25 +37,25 @@ class TestQuote(unittest.TestCase):
 
 
 class TestQuotes(unittest.TestCase):
+    def setUp(self) -> None:
+        with patch.object(Quotes, "read"):
+            self.quotes = Quotes()
+
     def test_is_update_required_false(self) -> None:
-        quotes = Quotes()
-        quotes.quotes = QUOTES_MODEL
-        self.assertIs(quotes.is_update_required(), False)
+        self.quotes.quotes = QUOTES_MODEL
+        self.assertIs(self.quotes.is_update_required(), False)
 
     def test_is_update_required_true_empty_quotes(self) -> None:
-        quotes = Quotes()
-        self.assertIs(quotes.is_update_required(), True)
+        self.assertIs(self.quotes.is_update_required(), True)
 
     def test_is_update_required_true_outdated(self) -> None:
-        quotes = Quotes()
-        quotes.quotes = copy.copy(QUOTES_MODEL)
-        quotes.quotes.last_update -= timedelta(days=1)
-        self.assertIs(quotes.is_update_required(), True)
+        self.quotes.quotes = copy.copy(QUOTES_MODEL)
+        self.quotes.quotes.last_update -= timedelta(days=1)
+        self.assertIs(self.quotes.is_update_required(), True)
 
     @patch("sys.stdout", new_callable=StringIO)
     def test_print(self, mock_stdout: StringIO) -> None:
-        quotes = Quotes()
-        quotes.quotes = QUOTES_MODEL
+        self.quotes.quotes = QUOTES_MODEL
 
         expected = (
             "TODAY:\n"
@@ -67,9 +67,9 @@ class TestQuotes(unittest.TestCase):
         )
         with patch(
             "zen_quotes.main.choice",
-            new=Mock(return_value=quotes.quotes.quotes[1]),
+            new=Mock(return_value=self.quotes.quotes.quotes[1]),
         ):
-            quotes.print()
+            self.quotes.print()
         self.assertEqual(mock_stdout.getvalue(), expected)
 
     @patch("sys.stdout", new_callable=StringIO)
@@ -80,27 +80,31 @@ class TestQuotes(unittest.TestCase):
         ), patch(
             "requests.get", new=Mock(side_effect=requests.ConnectionError)
         ):
-            Quotes().run()
+            self.quotes.run()
         self.assertEqual(mock_stdout.getvalue(), "Requesting new quotes\n")
 
 
 class TestQuotesRead(unittest.TestCase):
+    def setUp(self) -> None:
+        with patch.object(Quotes, "read"):
+            self.quotes = Quotes()
+
     def test_pass(self) -> None:
         read_data = QUOTES_MODEL_JSON_STR
 
-        quotes = Quotes()
         with patch("zen_quotes.main.open", new=mock_open(read_data=read_data)):
-            quotes.read()
-        assert quotes.quotes is not None
-        self.assertEqual(quotes.quotes.model_dump_json(indent=4), read_data)
+            self.quotes.read()
+        assert self.quotes.quotes is not None
+        self.assertEqual(
+            self.quotes.quotes.model_dump_json(indent=4), read_data
+        )
 
     def test_file_not_found(self) -> None:
-        quotes = Quotes()
         with patch(
             "zen_quotes.main.open",
             new=Mock(side_effect=FileNotFoundError),
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
-            quotes.read()
+            self.quotes.read()
 
             output_file = (
                 Path(__file__).parent.parent.parent
@@ -111,18 +115,17 @@ class TestQuotesRead(unittest.TestCase):
                 logger_obj.records[0].getMessage(),
                 f"Output file not found: {output_file.as_posix()}",
             )
-        self.assertIsNone(quotes.quotes)
+        self.assertIsNone(self.quotes.quotes)
 
     def test_invalid_json(self) -> None:
         read_data = QUOTES_MODEL_JSON_STR
         read_data = read_data.replace("today", "oday", 1)
 
-        quotes = Quotes()
         with patch(
             "zen_quotes.main.open",
             new=mock_open(read_data=read_data),
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
-            quotes.read()
+            self.quotes.read()
 
             output_file = (
                 Path(__file__).parent.parent.parent
@@ -133,10 +136,14 @@ class TestQuotesRead(unittest.TestCase):
                 logger_obj.records[0].getMessage(),
                 f"Error parsing output file: {output_file.as_posix()}",
             )
-        self.assertIsNone(quotes.quotes)
+        self.assertIsNone(self.quotes.quotes)
 
 
 class TestQuotesRequest(unittest.TestCase):
+    def setUp(self) -> None:
+        with patch.object(Quotes, "read"):
+            self.quotes = Quotes()
+
     def test_request_quote_single(self) -> None:
         with patch(
             "requests.get",
@@ -147,7 +154,7 @@ class TestQuotesRequest(unittest.TestCase):
             ),
         ):
             self.assertEqual(
-                Quotes().request(QuoteMode.TODAY),
+                self.quotes.request(QuoteMode.TODAY),
                 [Quote(quote=QUOTES[0]["q"], author=QUOTES[0]["a"])],
             )
 
@@ -161,7 +168,7 @@ class TestQuotesRequest(unittest.TestCase):
             ),
         ):
             self.assertEqual(
-                Quotes().request(QuoteMode.QUOTES),
+                self.quotes.request(QuoteMode.QUOTES),
                 QUOTES_MODEL.quotes,
             )
 
@@ -169,7 +176,7 @@ class TestQuotesRequest(unittest.TestCase):
         with patch(
             "requests.get", new=Mock(side_effect=requests.ConnectionError)
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
-            self.assertIsNone(Quotes().request(QuoteMode.QUOTES))
+            self.assertIsNone(self.quotes.request(QuoteMode.QUOTES))
             self.assertEqual(
                 logger_obj.records[0].getMessage(),
                 (
@@ -182,7 +189,7 @@ class TestQuotesRequest(unittest.TestCase):
         with patch(
             "requests.get", new=Mock(side_effect=requests.Timeout)
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
-            self.assertIsNone(Quotes().request(QuoteMode.QUOTES))
+            self.assertIsNone(self.quotes.request(QuoteMode.QUOTES))
             self.assertEqual(
                 logger_obj.records[0].getMessage(),
                 (
@@ -195,7 +202,7 @@ class TestQuotesRequest(unittest.TestCase):
         with patch(
             "requests.get", new=Mock(return_value=Mock(status_code=201))
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
-            self.assertIsNone(Quotes().request(QuoteMode.QUOTES))
+            self.assertIsNone(self.quotes.request(QuoteMode.QUOTES))
             self.assertEqual(
                 logger_obj.records[0].getMessage(),
                 "Invalid HTTP status code: https://zenquotes.io/api/quotes",
