@@ -90,13 +90,14 @@ class TestQuotesRead(unittest.TestCase):
             self.quotes = Quotes()
 
     def test_pass(self) -> None:
-        read_data = QUOTES_MODEL_JSON_STR
-
-        with patch("zen_quotes.main.open", new=mock_open(read_data=read_data)):
+        with patch(
+            "zen_quotes.main.open",
+            new=mock_open(read_data=QUOTES_MODEL_JSON_STR),
+        ):
             self.quotes.read()
         assert self.quotes.quotes is not None
         self.assertEqual(
-            self.quotes.quotes.model_dump_json(indent=4), read_data
+            self.quotes.quotes.model_dump_json(indent=4), QUOTES_MODEL_JSON_STR
         )
 
     def test_file_not_found(self) -> None:
