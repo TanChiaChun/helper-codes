@@ -38,16 +38,70 @@ class QuotesModel(BaseModel):
     quotes: list[Quote]
 
 
-class Quotes:
-    """List of Quotes from Zen Quotes."""
+class QuotesStorage:
+    """File I/O for `QuotesModel`."""
 
     _OUTPUT_DIR = Path(__file__).parent.parent.parent / "output"
     _OUTPUT_FILE = _OUTPUT_DIR / "zen_quotes.json"
 
-    def __init__(self) -> None:
-        self.quotes: Optional[QuotesModel] = None
+    @classmethod
+    def read(cls) -> QuotesModel:
+        """Read quotes from JSON file.
 
-        self.read()
+        Returns:
+           `QuotesModel` instance.
+
+        Raises:
+            FileNotFoundError:
+                Output file not found.
+            pydantic.ValidationError:
+                Error parsing output file.
+        """
+        try:
+            with open(cls._OUTPUT_FILE, encoding="utf8") as f:
+                j = f.read()
+        except FileNotFoundError:
+            logger.warning(
+                "Output file not found: %s", cls._OUTPUT_FILE.as_posix()
+            )
+            raise
+
+        try:
+            quotes = QuotesModel.model_validate_json(j)
+        except ValidationError:
+            logger.warning(
+                "Error parsing output file: %s", cls._OUTPUT_FILE.as_posix()
+            )
+            raise
+
+        return quotes
+
+    @classmethod
+    def write(cls, quotes: QuotesModel) -> None:
+        """Write quotes to JSON file.
+
+        - Create output directory if not exist.
+
+        Args:
+            quotes:
+                `QuotesModel` instance to be written.
+        """
+        if not cls._OUTPUT_DIR.is_dir():
+            cls._OUTPUT_DIR.mkdir()
+
+        with open(cls._OUTPUT_FILE, mode="w", encoding="utf8") as f:
+            f.write(quotes.model_dump_json(indent=4))
+
+
+class Quotes:
+    """List of Quotes from Zen Quotes."""
+
+    def __init__(self) -> None:
+        self.quotes: Optional[QuotesModel]
+        try:
+            self.quotes = QuotesStorage.read()
+        except (FileNotFoundError, ValidationError):
+            self.quotes = None
 
     def is_update_required(self) -> bool:
         """Return True if request of new quotes are required."""
@@ -65,27 +119,6 @@ class Quotes:
             print("")
             print("RANDOM:")
             print(choice(self.quotes.quotes))
-
-    def read(self) -> None:
-        """Read quotes from JSON file.
-
-        Skip if file not found or error parsing JSON.
-        """
-        try:
-            with open(self._OUTPUT_FILE, encoding="utf8") as f:
-                j = f.read()
-        except FileNotFoundError:
-            logger.warning(
-                "Output file not found: %s", self._OUTPUT_FILE.as_posix()
-            )
-            return
-
-        try:
-            self.quotes = QuotesModel.model_validate_json(j)
-        except ValidationError:
-            logger.warning(
-                "Error parsing output file: %s", self._OUTPUT_FILE.as_posix()
-            )
 
     def request(self, quote_mode: QuoteMode) -> Optional[list[Quote]]:
         """Request quote from Zen Quotes.
@@ -117,20 +150,6 @@ class Quotes:
 
         return [Quote(quote=quote["q"], author=quote["a"]) for quote in j]
 
-    def write(self) -> None:
-        """Write quotes to JSON file.
-
-        Skip if None.
-        """
-        if not self.quotes:
-            return
-
-        if not self._OUTPUT_DIR.is_dir():
-            self._OUTPUT_DIR.mkdir()
-
-        with open(self._OUTPUT_FILE, mode="w", encoding="utf8") as f:
-            f.write(self.quotes.model_dump_json(indent=4))
-
     def run(self) -> None:
         """Read from local JSON file & update if required."""
         if self.is_update_required():
@@ -142,7 +161,7 @@ class Quotes:
                 self.quotes = QuotesModel(
                     last_update=date.today(), today=today, quotes=quotes
                 )
-                self.write()
+                QuotesStorage.write(self.quotes)
 
         self.print()
 
