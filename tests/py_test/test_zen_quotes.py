@@ -71,6 +71,57 @@ class TestQuotesStorage(unittest.TestCase):
             )
 
 
+class TestQuotesStorageRead(unittest.TestCase):
+    def test_pass(self) -> None:
+        with patch(
+            "zen_quotes.main.open",
+            new=mock_open(read_data=QUOTES_MODEL_JSON_STR),
+        ):
+            quotes = QuotesStorage.read()
+        self.assertEqual(
+            quotes.model_dump_json(indent=4), QUOTES_MODEL_JSON_STR
+        )
+
+    def test_file_not_found(self) -> None:
+        with patch(
+            "zen_quotes.main.open",
+            new=Mock(side_effect=FileNotFoundError),
+        ), self.assertLogs(logger, logging.WARNING) as logger_obj:
+            with self.assertRaises(FileNotFoundError):
+                QuotesStorage.read()
+
+            output_file = (
+                Path(__file__).parent.parent.parent
+                / "output"
+                / "zen_quotes.json"
+            )
+            self.assertEqual(
+                logger_obj.records[0].getMessage(),
+                f"Output file not found: {output_file.as_posix()}",
+            )
+
+    def test_invalid_json(self) -> None:
+        read_data = QUOTES_MODEL_JSON_STR
+        read_data = read_data.replace("today", "oday", 1)
+
+        with patch(
+            "zen_quotes.main.open",
+            new=mock_open(read_data=read_data),
+        ), self.assertLogs(logger, logging.WARNING) as logger_obj:
+            with self.assertRaises(ValidationError):
+                QuotesStorage.read()
+
+            output_file = (
+                Path(__file__).parent.parent.parent
+                / "output"
+                / "zen_quotes.json"
+            )
+            self.assertEqual(
+                logger_obj.records[0].getMessage(),
+                f"Error parsing output file: {output_file.as_posix()}",
+            )
+
+
 class TestQuotes(unittest.TestCase):
     def setUp(self) -> None:
         with patch(
@@ -130,57 +181,6 @@ class TestQuotes(unittest.TestCase):
         ):
             self.quotes.run()
         self.assertEqual(mock_stdout.getvalue(), "Requesting new quotes\n")
-
-
-class TestQuotesStorageRead(unittest.TestCase):
-    def test_pass(self) -> None:
-        with patch(
-            "zen_quotes.main.open",
-            new=mock_open(read_data=QUOTES_MODEL_JSON_STR),
-        ):
-            quotes = QuotesStorage.read()
-        self.assertEqual(
-            quotes.model_dump_json(indent=4), QUOTES_MODEL_JSON_STR
-        )
-
-    def test_file_not_found(self) -> None:
-        with patch(
-            "zen_quotes.main.open",
-            new=Mock(side_effect=FileNotFoundError),
-        ), self.assertLogs(logger, logging.WARNING) as logger_obj:
-            with self.assertRaises(FileNotFoundError):
-                QuotesStorage.read()
-
-            output_file = (
-                Path(__file__).parent.parent.parent
-                / "output"
-                / "zen_quotes.json"
-            )
-            self.assertEqual(
-                logger_obj.records[0].getMessage(),
-                f"Output file not found: {output_file.as_posix()}",
-            )
-
-    def test_invalid_json(self) -> None:
-        read_data = QUOTES_MODEL_JSON_STR
-        read_data = read_data.replace("today", "oday", 1)
-
-        with patch(
-            "zen_quotes.main.open",
-            new=mock_open(read_data=read_data),
-        ), self.assertLogs(logger, logging.WARNING) as logger_obj:
-            with self.assertRaises(ValidationError):
-                QuotesStorage.read()
-
-            output_file = (
-                Path(__file__).parent.parent.parent
-                / "output"
-                / "zen_quotes.json"
-            )
-            self.assertEqual(
-                logger_obj.records[0].getMessage(),
-                f"Error parsing output file: {output_file.as_posix()}",
-            )
 
 
 class TestQuotesRequest(unittest.TestCase):
