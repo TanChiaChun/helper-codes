@@ -174,9 +174,6 @@ class TestQuotes(unittest.TestCase):
     @patch("sys.stdout", new_callable=StringIO)
     def test_run_print_only(self, mock_stdout: StringIO) -> None:
         with patch(
-            "zen_quotes.main.open",
-            new=Mock(side_effect=FileNotFoundError),
-        ), patch(
             "requests.get", new=Mock(side_effect=requests.ConnectionError)
         ):
             self.quotes.run()
