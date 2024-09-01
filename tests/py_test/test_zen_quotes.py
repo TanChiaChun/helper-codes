@@ -268,8 +268,8 @@ class TestModule(unittest.TestCase):
         )
 
         with patch(
-            "pathlib.Path.read_text",
-            new=Mock(return_value=QUOTES_MODEL_JSON_STR),
+            "zen_quotes.main.QuotesStorage.read",
+            new=Mock(return_value=QUOTES_MODEL),
         ), patch(
             "zen_quotes.main.choice",
             new=Mock(return_value=QUOTES_MODEL.quotes[1]),
