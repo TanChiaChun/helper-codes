@@ -18,6 +18,7 @@ from zen_quotes.main import (
     QuotesModel,
     QuotesStorage,
     logger,
+    main,
 )
 
 QUOTES = [
@@ -273,7 +274,7 @@ class TestModule(unittest.TestCase):
             "zen_quotes.main.choice",
             new=Mock(return_value=QUOTES_MODEL.quotes[1]),
         ):
-            Quotes().run()
+            main()
         self.assertEqual(mock_stdout.getvalue(), expected)
 
 
