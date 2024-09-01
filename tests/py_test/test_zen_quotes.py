@@ -130,12 +130,16 @@ class TestQuotes(unittest.TestCase):
             self.quotes = Quotes()
 
     @patch(
-        "pathlib.Path.read_text", new=Mock(return_value=QUOTES_MODEL_JSON_STR)
+        "zen_quotes.main.QuotesStorage.read",
+        new=Mock(return_value=QUOTES_MODEL),
     )
     def test_init_quotes_exist(self) -> None:
         self.assertIsNotNone(Quotes().quotes)
 
-    @patch("pathlib.Path.read_text", new=Mock(side_effect=FileNotFoundError))
+    @patch(
+        "zen_quotes.main.QuotesStorage.read",
+        new=Mock(side_effect=FileNotFoundError),
+    )
     def test_init_quotes_none(self) -> None:
         self.assertIsNone(Quotes().quotes)
 
@@ -172,9 +176,7 @@ class TestQuotes(unittest.TestCase):
 
     @patch("sys.stdout", new_callable=StringIO)
     def test_run_print_only(self, mock_stdout: StringIO) -> None:
-        with patch(
-            "requests.get", new=Mock(side_effect=requests.ConnectionError)
-        ):
+        with patch.object(self.quotes, "request", new=Mock(return_value=None)):
             self.quotes.run()
         self.assertEqual(mock_stdout.getvalue(), "Requesting new quotes\n")
 
