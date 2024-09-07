@@ -102,8 +102,7 @@ class TestQuotesStorageRead(unittest.TestCase):
             )
 
     def test_invalid_json(self) -> None:
-        read_data = QUOTES_MODEL_JSON_STR
-        read_data = read_data.replace("today", "oday", 1)
+        read_data = QUOTES_MODEL_JSON_STR.replace("today", "oday", 1)
 
         with patch(
             "pathlib.Path.read_text", new=Mock(return_value=read_data)
