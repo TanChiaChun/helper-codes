@@ -104,7 +104,7 @@ class Quotes:
             self.quotes = None
 
     def is_update_required(self) -> bool:
-        """Return True if request of new quotes are required."""
+        """Return True if request of new quotes is required."""
         if self.quotes and self.quotes.last_update == date.today():
             return False
         return True
