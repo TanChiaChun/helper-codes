@@ -103,7 +103,7 @@ class Quotes:
         except (FileNotFoundError, ValidationError):
             self.quotes = None
 
-    def is_update_required(self) -> bool:
+    def _is_update_required(self) -> bool:
         """Return True if request of new quotes is required."""
         if self.quotes and self.quotes.last_update == date.today():
             return False
@@ -150,7 +150,7 @@ class Quotes:
 
     def run(self) -> None:
         """Read from local JSON file & update if required."""
-        if self.is_update_required():
+        if self._is_update_required():
             print("Requesting new quotes")
 
             today = self.request(QuoteMode.TODAY)

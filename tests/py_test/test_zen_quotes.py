@@ -5,7 +5,7 @@ import unittest
 from datetime import date, timedelta
 from io import StringIO
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import DEFAULT, MagicMock, Mock, patch
 
 import requests
 from pydantic import ValidationError
@@ -165,18 +165,6 @@ class TestQuotes(BaseFixtureTestCase):
     def test_init_quotes_none(self) -> None:
         self.assertIsNone(Quotes().quotes)
 
-    def test_is_update_required_false(self) -> None:
-        self.quotes.quotes = self.quotes_model
-        self.assertIs(self.quotes.is_update_required(), False)
-
-    def test_is_update_required_true_empty_quotes(self) -> None:
-        self.assertIs(self.quotes.is_update_required(), True)
-
-    def test_is_update_required_true_outdated(self) -> None:
-        self.quotes.quotes = self.quotes_model
-        self.quotes.quotes.last_update -= timedelta(days=1)
-        self.assertIs(self.quotes.is_update_required(), True)
-
     @patch("sys.stdout", new_callable=StringIO)
     def test_print(self, mock_stdout: StringIO) -> None:
         self.quotes.quotes = self.quotes_model
@@ -197,10 +185,63 @@ class TestQuotes(BaseFixtureTestCase):
         self.assertEqual(mock_stdout.getvalue(), expected)
 
     @patch("sys.stdout", new_callable=StringIO)
-    def test_run_print_only(self, mock_stdout: StringIO) -> None:
-        with patch.object(self.quotes, "request", new=Mock(return_value=None)):
+    @patch("zen_quotes.main.QuotesStorage.write")
+    def test_run(
+        self, mock_quotes_write: MagicMock, mock_stdout: StringIO
+    ) -> None:
+        mock_quotes_requests = Mock(
+            side_effect=[self.quotes_model.today, self.quotes_model.quotes]
+        )
+        with patch.multiple(
+            self.quotes, request=mock_quotes_requests, print=DEFAULT
+        ) as mocks:
             self.quotes.run()
-        self.assertEqual(mock_stdout.getvalue(), "Requesting new quotes\n")
+
+            mock_quotes_print: MagicMock = mocks["print"]
+            mock_quotes_print.assert_called_once()
+
+        mock_quotes_write.assert_called_once_with(self.quotes_model)
+
+        self.assertEqual(
+            mock_stdout.getvalue().split("\n")[0], "Requesting new quotes"
+        )
+
+    @patch("zen_quotes.main.QuotesStorage.write")
+    def test_run_update_quotes_yesterday(
+        self, mock_quotes_write: MagicMock
+    ) -> None:
+        self.quotes.quotes = self.quotes_model
+        self.quotes.quotes.last_update -= timedelta(days=1)
+
+        with patch.multiple(
+            self.quotes, request=DEFAULT, print=DEFAULT
+        ) as mocks:
+            self.quotes.run()
+
+            mock_quotes_request: MagicMock = mocks["request"]
+            self.assertEqual(mock_quotes_request.call_count, 2)
+
+            mock_quotes_print: MagicMock = mocks["print"]
+            mock_quotes_print.assert_called_once()
+
+        mock_quotes_write.assert_called_once()
+
+    @patch("zen_quotes.main.QuotesStorage.write")
+    def test_run_no_update(self, mock_quotes_write: MagicMock) -> None:
+        self.quotes.quotes = self.quotes_model
+
+        with patch.multiple(
+            self.quotes, print=DEFAULT, request=DEFAULT
+        ) as mocks:
+            self.quotes.run()
+
+            mock_quotes_print: MagicMock = mocks["print"]
+            mock_quotes_print.assert_called_once()
+
+            mock_quotes_request: MagicMock = mocks["request"]
+            mock_quotes_request.assert_not_called()
+
+        mock_quotes_write.assert_not_called()
 
 
 class TestQuotesRequest(BaseFixtureTestCase):
