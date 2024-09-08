@@ -103,12 +103,6 @@ class Quotes:
         except (FileNotFoundError, ValidationError):
             self.quotes = None
 
-    def _is_update_required(self) -> bool:
-        """Return True if request of new quotes is required."""
-        if self.quotes and self.quotes.last_update == date.today():
-            return False
-        return True
-
     def print(self) -> None:
         """Print TODAY quote and 1 quote randomly from QUOTES."""
         if self.quotes:
@@ -162,6 +156,12 @@ class Quotes:
                 QuotesStorage.write(self.quotes)
 
         self.print()
+
+    def _is_update_required(self) -> bool:
+        """Return True if request of new quotes is required."""
+        if self.quotes and self.quotes.last_update == date.today():
+            return False
+        return True
 
 
 def main() -> None:
