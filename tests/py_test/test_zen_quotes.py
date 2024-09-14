@@ -5,7 +5,7 @@ import unittest
 from datetime import date, timedelta
 from io import StringIO
 from pathlib import Path
-from unittest.mock import DEFAULT, MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import requests
 from pydantic import ValidationError
@@ -18,6 +18,7 @@ from zen_quotes.main import (
     QuotesStorage,
     logger,
     main,
+    request_quotes,
 )
 
 
@@ -192,12 +193,11 @@ class TestQuotes(BaseFixtureTestCase):
         mock_quotes_requests = Mock(
             side_effect=[self.quotes_model.today, self.quotes_model.quotes]
         )
-        with patch.multiple(
-            self.quotes, request=mock_quotes_requests, print=DEFAULT
-        ) as mocks:
+        with patch(
+            "zen_quotes.main.request_quotes", new=mock_quotes_requests
+        ), patch.object(self.quotes, "print") as mock_quotes_print:
             self.quotes.run()
 
-            mock_quotes_print: MagicMock = mocks["print"]
             mock_quotes_print.assert_called_once()
 
         mock_quotes_write.assert_called_once_with(self.quotes_model)
@@ -207,53 +207,54 @@ class TestQuotes(BaseFixtureTestCase):
         )
 
     @patch("zen_quotes.main.QuotesStorage.write")
+    @patch("zen_quotes.main.request_quotes")
     def test_run_update_quotes_yesterday(
-        self, mock_quotes_write: MagicMock
+        self, mock_quotes_request: MagicMock, mock_quotes_write: MagicMock
     ) -> None:
         self.quotes.quotes = self.quotes_model
         self.quotes.quotes.last_update -= timedelta(days=1)
 
-        with patch.multiple(
-            self.quotes, request=DEFAULT, print=DEFAULT
-        ) as mocks:
+        with patch.object(self.quotes, "print") as mock_quotes_print:
             self.quotes.run()
 
-            mock_quotes_request: MagicMock = mocks["request"]
             self.assertEqual(mock_quotes_request.call_count, 2)
 
-            mock_quotes_print: MagicMock = mocks["print"]
             mock_quotes_print.assert_called_once()
 
         mock_quotes_write.assert_called_once()
 
+    @patch(
+        "zen_quotes.main.request_quotes",
+        new=Mock(side_effect=requests.ConnectionError),
+    )
     @patch("zen_quotes.main.QuotesStorage.write")
-    def test_run_no_update(self, mock_quotes_write: MagicMock) -> None:
+    def test_run_request_quotes_error(
+        self, mock_quotes_request: MagicMock
+    ) -> None:
+        self.quotes.run()
+
+        self.assertIsNone(self.quotes.quotes)
+        mock_quotes_request.assert_not_called()
+
+    @patch("zen_quotes.main.QuotesStorage.write")
+    @patch("zen_quotes.main.request_quotes")
+    def test_run_no_update(
+        self, mock_quotes_request: MagicMock, mock_quotes_write: MagicMock
+    ) -> None:
         self.quotes.quotes = self.quotes_model
 
-        with patch.multiple(
-            self.quotes, print=DEFAULT, request=DEFAULT
-        ) as mocks:
+        with patch.object(self.quotes, "print") as mock_quotes_print:
             self.quotes.run()
 
-            mock_quotes_print: MagicMock = mocks["print"]
             mock_quotes_print.assert_called_once()
 
-            mock_quotes_request: MagicMock = mocks["request"]
             mock_quotes_request.assert_not_called()
 
         mock_quotes_write.assert_not_called()
 
 
-class TestQuotesRequest(BaseFixtureTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        with patch(
-            "zen_quotes.main.QuotesStorage.read",
-            new=Mock(side_effect=FileNotFoundError),
-        ):
-            self.quotes = Quotes()
-
-    def test_request_quote_single(self) -> None:
+class TestRequestQuotes(BaseFixtureTestCase):
+    def test_quote_single(self) -> None:
         with patch(
             "requests.get",
             new=Mock(
@@ -264,7 +265,7 @@ class TestQuotesRequest(BaseFixtureTestCase):
             ),
         ):
             self.assertEqual(
-                self.quotes.request(QuoteMode.TODAY),
+                request_quotes(QuoteMode.TODAY),
                 [
                     Quote(
                         quote=self.quotes_list[0]["q"],
@@ -273,7 +274,7 @@ class TestQuotesRequest(BaseFixtureTestCase):
                 ],
             )
 
-    def test_request_quote_multiple(self) -> None:
+    def test_quote_multiple(self) -> None:
         with patch(
             "requests.get",
             new=Mock(
@@ -283,15 +284,16 @@ class TestQuotesRequest(BaseFixtureTestCase):
             ),
         ):
             self.assertEqual(
-                self.quotes.request(QuoteMode.QUOTES),
+                request_quotes(QuoteMode.QUOTES),
                 self.quotes_model.quotes,
             )
 
-    def test_request_quote_connection_error(self) -> None:
+    def test_connection_error(self) -> None:
         with patch(
             "requests.get", new=Mock(side_effect=requests.ConnectionError)
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
-            self.assertIsNone(self.quotes.request(QuoteMode.QUOTES))
+            with self.assertRaises(requests.ConnectionError):
+                request_quotes(QuoteMode.QUOTES)
             self.assertEqual(
                 logger_obj.records[0].getMessage(),
                 (
@@ -300,11 +302,12 @@ class TestQuotesRequest(BaseFixtureTestCase):
                 ),
             )
 
-    def test_request_quote_timeout(self) -> None:
+    def test_timeout(self) -> None:
         with patch(
             "requests.get", new=Mock(side_effect=requests.Timeout)
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
-            self.assertIsNone(self.quotes.request(QuoteMode.QUOTES))
+            with self.assertRaises(requests.Timeout):
+                request_quotes(QuoteMode.QUOTES)
             self.assertEqual(
                 logger_obj.records[0].getMessage(),
                 (
@@ -313,11 +316,15 @@ class TestQuotesRequest(BaseFixtureTestCase):
                 ),
             )
 
-    def test_request_quote_error_status_code(self) -> None:
+    def test_http_error(self) -> None:
+        response = requests.Response()
+        response.status_code = 400
+
         with patch(
-            "requests.get", new=Mock(return_value=Mock(status_code=201))
+            "requests.get", new=Mock(return_value=response)
         ), self.assertLogs(logger, logging.WARNING) as logger_obj:
-            self.assertIsNone(self.quotes.request(QuoteMode.QUOTES))
+            with self.assertRaises(requests.HTTPError):
+                request_quotes(QuoteMode.QUOTES)
             self.assertEqual(
                 logger_obj.records[0].getMessage(),
                 "Invalid HTTP status code: https://zenquotes.io/api/quotes",

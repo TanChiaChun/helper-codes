@@ -38,6 +38,47 @@ class QuotesModel(BaseModel):
     quotes: list[Quote]
 
 
+def request_quotes(quote_mode: QuoteMode) -> list[Quote]:
+    """Request quote from Zen Quotes.
+
+    Args:
+        quote_mode:
+            Quote mode to Zen Quotes.
+
+    Returns:
+        List of Quote.
+
+    Raises:
+        requests.ConnectionError:
+            ConnectionError when requesting quotes.
+        requests.Timeout:
+            Timeout when requesting quotes.
+        requests.HTTPError:
+            Invalid HTTP status code.
+    """
+    get_url = f"https://zenquotes.io/api/{quote_mode.value}"
+    try:
+        r = requests.get(get_url, timeout=10)
+    except requests.ConnectionError:
+        logger.warning(
+            "ConnectionError when requesting Zen Quotes: %s", get_url
+        )
+        raise
+    except requests.Timeout:
+        logger.warning("Timeout when requesting Zen Quotes: %s", get_url)
+        raise
+
+    try:
+        r.raise_for_status()
+    except requests.HTTPError:
+        logger.warning("Invalid HTTP status code: %s", get_url)
+        raise
+
+    j = r.json()
+
+    return [Quote(quote=quote["q"], author=quote["a"]) for quote in j]
+
+
 class QuotesStorage:
     """File I/O for `QuotesModel`."""
 
@@ -112,44 +153,21 @@ class Quotes:
             print("RANDOM:")
             print(choice(self.quotes.quotes))
 
-    def request(self, quote_mode: QuoteMode) -> Optional[list[Quote]]:
-        """Request quote from Zen Quotes.
-
-        Args:
-            quote_mode:
-                Quote mode to Zen Quotes.
-
-        Returns:
-            List of Quote, else None when error.
-        """
-        get_url = f"https://zenquotes.io/api/{quote_mode.value}"
-        try:
-            r = requests.get(get_url, timeout=10)
-        except requests.ConnectionError:
-            logger.warning(
-                "ConnectionError when requesting Zen Quotes: %s", get_url
-            )
-            return None
-        except requests.Timeout:
-            logger.warning("Timeout when requesting Zen Quotes: %s", get_url)
-            return None
-
-        if r.status_code != 200:
-            logger.warning("Invalid HTTP status code: %s", get_url)
-            return None
-
-        j = r.json()
-
-        return [Quote(quote=quote["q"], author=quote["a"]) for quote in j]
-
     def run(self) -> None:
         """Read from local JSON file & update if required."""
         if self._is_update_required():
             print("Requesting new quotes")
 
-            today = self.request(QuoteMode.TODAY)
-            quotes = self.request(QuoteMode.QUOTES)
-            if today and quotes:
+            try:
+                today = request_quotes(QuoteMode.TODAY)
+                quotes = request_quotes(QuoteMode.QUOTES)
+            except (
+                requests.ConnectionError,
+                requests.Timeout,
+                requests.HTTPError,
+            ):
+                pass
+            else:
                 self.quotes = QuotesModel(
                     last_update=date.today(), today=today, quotes=quotes
                 )
