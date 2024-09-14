@@ -323,6 +323,22 @@ class TestRequestQuotes(BaseFixtureTestCase):
                 "Invalid HTTP status code: https://zenquotes.io/api/quotes",
             )
 
+    def test_json_decode_error(self) -> None:
+        response = requests.Response()
+
+        with patch.object(response, "raise_for_status"), patch(
+            "requests.get", new=Mock(return_value=response)
+        ), self.assertLogs(logger, logging.WARNING) as logger_obj:
+            with self.assertRaises(requests.exceptions.JSONDecodeError):
+                request_quotes(QuoteMode.QUOTES)
+            self.assertEqual(
+                logger_obj.records[0].getMessage(),
+                (
+                    "Invalid JSON content in response: "
+                    "https://zenquotes.io/api/quotes"
+                ),
+            )
+
 
 class TestModule(BaseFixtureTestCase):
     @patch("sys.stdout", new_callable=StringIO)

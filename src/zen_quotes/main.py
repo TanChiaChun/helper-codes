@@ -55,6 +55,8 @@ def request_quotes(quote_mode: QuoteMode) -> list[Quote]:
             Timeout when requesting quotes.
         requests.HTTPError:
             Invalid HTTP status code.
+        requests.exceptions.JSONDecodeError:
+            Invalid JSON content in response.
     """
     get_url = f"https://zenquotes.io/api/{quote_mode.value}"
     try:
@@ -74,7 +76,11 @@ def request_quotes(quote_mode: QuoteMode) -> list[Quote]:
         logger.warning("Invalid HTTP status code: %s", get_url)
         raise
 
-    j = r.json()
+    try:
+        j = r.json()
+    except requests.exceptions.JSONDecodeError:
+        logger.warning("Invalid JSON content in response: %s", get_url)
+        raise
 
     return [Quote(quote=quote["q"], author=quote["a"]) for quote in j]
 
@@ -165,6 +171,7 @@ class Quotes:
                 requests.ConnectionError,
                 requests.Timeout,
                 requests.HTTPError,
+                requests.exceptions.JSONDecodeError,
             ):
                 pass
             else:
