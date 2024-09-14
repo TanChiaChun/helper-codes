@@ -59,6 +59,7 @@ def request_quotes(quote_mode: QuoteMode) -> list[Quote]:
             Invalid JSON content in response.
     """
     get_url = f"https://zenquotes.io/api/{quote_mode.value}"
+
     try:
         r = requests.get(get_url, timeout=10)
     except requests.ConnectionError:
