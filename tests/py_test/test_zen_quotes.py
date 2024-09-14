@@ -257,15 +257,10 @@ class TestQuotesRun(QuotesFixtureTestCase):
 
 class TestRequestQuotes(BaseFixtureTestCase):
     def test_quote_single(self) -> None:
-        with patch(
-            "requests.get",
-            new=Mock(
-                return_value=Mock(
-                    status_code=200,
-                    json=Mock(return_value=[self.quotes_list[0]]),
-                )
-            ),
-        ):
+        mock_response = Mock()
+        mock_response.json = Mock(return_value=[self.quotes_list[0]])
+
+        with patch("requests.get", new=Mock(return_value=mock_response)):
             self.assertEqual(
                 request_quotes(QuoteMode.TODAY),
                 [
@@ -277,14 +272,10 @@ class TestRequestQuotes(BaseFixtureTestCase):
             )
 
     def test_quote_multiple(self) -> None:
-        with patch(
-            "requests.get",
-            new=Mock(
-                return_value=Mock(
-                    status_code=200, json=Mock(return_value=self.quotes_list)
-                )
-            ),
-        ):
+        mock_response = Mock()
+        mock_response.json = Mock(return_value=self.quotes_list)
+
+        with patch("requests.get", new=Mock(return_value=mock_response)):
             self.assertEqual(
                 request_quotes(QuoteMode.QUOTES),
                 self.quotes_model.quotes,
