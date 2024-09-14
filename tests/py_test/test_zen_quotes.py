@@ -50,6 +50,16 @@ class BaseFixtureTestCase(unittest.TestCase):
         self.quotes_model_json_str = self.quotes_model.model_dump_json(indent=4)
 
 
+class QuotesFixtureTestCase(BaseFixtureTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        with patch(
+            "zen_quotes.main.QuotesStorage.read",
+            new=Mock(side_effect=FileNotFoundError),
+        ):
+            self.quotes = Quotes()
+
+
 class TestQuote(BaseFixtureTestCase):
     def test_str(self) -> None:
         self.assertEqual(
@@ -143,15 +153,7 @@ class TestQuotesStorageRead(BaseFixtureTestCase):
             )
 
 
-class TestQuotes(BaseFixtureTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        with patch(
-            "zen_quotes.main.QuotesStorage.read",
-            new=Mock(side_effect=FileNotFoundError),
-        ):
-            self.quotes = Quotes()
-
+class TestQuotes(QuotesFixtureTestCase):
     def test_init_quotes_exist(self) -> None:
         with patch(
             "zen_quotes.main.QuotesStorage.read",
@@ -185,9 +187,11 @@ class TestQuotes(BaseFixtureTestCase):
             self.quotes.print()
         self.assertEqual(mock_stdout.getvalue(), expected)
 
+
+class TestQuotesRun(QuotesFixtureTestCase):
     @patch("sys.stdout", new_callable=StringIO)
     @patch("zen_quotes.main.QuotesStorage.write")
-    def test_run(
+    def test_pass(
         self, mock_quotes_write: MagicMock, mock_stdout: StringIO
     ) -> None:
         mock_quotes_requests = Mock(
@@ -208,7 +212,7 @@ class TestQuotes(BaseFixtureTestCase):
 
     @patch("zen_quotes.main.QuotesStorage.write")
     @patch("zen_quotes.main.request_quotes")
-    def test_run_update_quotes_yesterday(
+    def test_quotes_yesterday(
         self, mock_quotes_request: MagicMock, mock_quotes_write: MagicMock
     ) -> None:
         self.quotes.quotes = self.quotes_model
@@ -228,9 +232,7 @@ class TestQuotes(BaseFixtureTestCase):
         new=Mock(side_effect=requests.ConnectionError),
     )
     @patch("zen_quotes.main.QuotesStorage.write")
-    def test_run_request_quotes_error(
-        self, mock_quotes_request: MagicMock
-    ) -> None:
+    def test_request_quotes_error(self, mock_quotes_request: MagicMock) -> None:
         self.quotes.run()
 
         self.assertIsNone(self.quotes.quotes)
@@ -238,7 +240,7 @@ class TestQuotes(BaseFixtureTestCase):
 
     @patch("zen_quotes.main.QuotesStorage.write")
     @patch("zen_quotes.main.request_quotes")
-    def test_run_no_update(
+    def test_no_update(
         self, mock_quotes_request: MagicMock, mock_quotes_write: MagicMock
     ) -> None:
         self.quotes.quotes = self.quotes_model
