@@ -339,6 +339,21 @@ class TestRequestQuotes(BaseFixtureTestCase):
                 ),
             )
 
+    def test_key_error(self) -> None:
+        del self.quotes_list[0]["q"]
+        mock_response = Mock()
+        mock_response.json = Mock(return_value=self.quotes_list)
+
+        with patch(
+            "requests.get", new=Mock(return_value=mock_response)
+        ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
+            with self.assertRaises(KeyError):
+                request_quotes(QuoteMode.QUOTES)
+            self.assertEqual(
+                cm.records[0].getMessage(),
+                "Key missing in JSON content: https://zenquotes.io/api/quotes",
+            )
+
 
 class TestModule(BaseFixtureTestCase):
     @patch("sys.stdout", new_callable=StringIO)

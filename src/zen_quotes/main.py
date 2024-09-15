@@ -57,6 +57,8 @@ def request_quotes(quote_mode: QuoteMode) -> list[Quote]:
             Invalid HTTP status code.
         requests.exceptions.JSONDecodeError:
             Invalid JSON content in response.
+        KeyError:
+            Key missing in JSON content.
     """
     get_url = f"https://zenquotes.io/api/{quote_mode.value}"
 
@@ -83,7 +85,13 @@ def request_quotes(quote_mode: QuoteMode) -> list[Quote]:
         logger.warning("Invalid JSON content in response: %s", get_url)
         raise
 
-    return [Quote(quote=quote["q"], author=quote["a"]) for quote in j]
+    try:
+        quotes = [Quote(quote=quote["q"], author=quote["a"]) for quote in j]
+    except KeyError:
+        logger.warning("Key missing in JSON content: %s", get_url)
+        raise
+
+    return quotes
 
 
 class QuotesStorage:
@@ -173,6 +181,7 @@ class Quotes:
                 requests.Timeout,
                 requests.HTTPError,
                 requests.exceptions.JSONDecodeError,
+                KeyError,
             ):
                 pass
             else:
