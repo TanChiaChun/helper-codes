@@ -161,12 +161,12 @@ class TestQuotes(QuotesFixtureTestCase):
         ):
             self.assertIsNotNone(Quotes().quotes)
 
-    @patch(
-        "zen_quotes.main.QuotesStorage.read",
-        new=Mock(side_effect=FileNotFoundError),
-    )
     def test_init_quotes_none(self) -> None:
-        self.assertIsNone(Quotes().quotes)
+        with patch(
+            "zen_quotes.main.QuotesStorage.read",
+            new=Mock(side_effect=FileNotFoundError),
+        ):
+            self.assertIsNone(Quotes().quotes)
 
     @patch("sys.stdout", new_callable=StringIO)
     def test_print(self, mock_stdout: StringIO) -> None:
@@ -227,13 +227,13 @@ class TestQuotesRun(QuotesFixtureTestCase):
 
         mock_quotes_write.assert_called_once()
 
-    @patch(
-        "zen_quotes.main.request_quotes",
-        new=Mock(side_effect=requests.ConnectionError),
-    )
     @patch("zen_quotes.main.QuotesStorage.write")
     def test_request_quotes_error(self, mock_quotes_request: MagicMock) -> None:
-        self.quotes.run()
+        with patch(
+            "zen_quotes.main.request_quotes",
+            new=Mock(side_effect=requests.ConnectionError),
+        ):
+            self.quotes.run()
 
         self.assertIsNone(self.quotes.quotes)
         mock_quotes_request.assert_not_called()
