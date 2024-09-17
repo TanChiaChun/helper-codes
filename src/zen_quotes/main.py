@@ -160,15 +160,6 @@ class Quotes:
         except (FileNotFoundError, ValidationError):
             self.quotes = None
 
-    def _print(self) -> None:
-        """Print TODAY quote and 1 quote randomly from QUOTES."""
-        if self.quotes:
-            print("TODAY:")
-            print(self.quotes.today[0])
-            print("")
-            print("RANDOM:")
-            print(choice(self.quotes.quotes))
-
     def run(self) -> None:
         """Read from local JSON file & update if required."""
         if self._is_update_required():
@@ -198,6 +189,15 @@ class Quotes:
         if self.quotes and self.quotes.last_update == date.today():
             return False
         return True
+
+    def _print(self) -> None:
+        """Print TODAY quote and 1 quote randomly from QUOTES."""
+        if self.quotes:
+            print("TODAY:")
+            print(self.quotes.today[0])
+            print("")
+            print("RANDOM:")
+            print(choice(self.quotes.quotes))
 
 
 def main() -> None:
