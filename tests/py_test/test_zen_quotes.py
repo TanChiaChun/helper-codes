@@ -60,6 +60,29 @@ class QuotesFixtureTestCase(BaseFixtureTestCase):
             self.quotes = Quotes()
 
 
+class TestModule(BaseFixtureTestCase):
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_main(self, mock_stdout: StringIO) -> None:
+        expected = (
+            "TODAY:\n"
+            f"{self.quotes_list[0]['q']} - {self.quotes_list[0]['a']}\n"
+            "\n"
+            "RANDOM:\n"
+            f"{self.quotes_list[1]['q']} - {self.quotes_list[1]['a']}"
+            "\n"
+        )
+
+        with patch(
+            "zen_quotes.main.QuotesStorage.read",
+            new=Mock(return_value=self.quotes_model),
+        ), patch(
+            "zen_quotes.main.choice",
+            new=Mock(return_value=self.quotes_model.quotes[1]),
+        ):
+            main()
+        self.assertEqual(mock_stdout.getvalue(), expected)
+
+
 class TestQuote(BaseFixtureTestCase):
     def test_str(self) -> None:
         self.assertEqual(
@@ -71,86 +94,6 @@ class TestQuote(BaseFixtureTestCase):
             ),
             f"{self.quotes_list[0]['q']} - {self.quotes_list[0]['a']}",
         )
-
-
-class TestQuotesStorage(BaseFixtureTestCase):
-    def test_write(self) -> None:
-        expected = {
-            "last_update": str(date.today()),
-            "today": [
-                {
-                    "quote": self.quotes_list[0]["q"],
-                    "author": self.quotes_list[0]["a"],
-                }
-            ],
-            "quotes": [
-                {"quote": quote["q"], "author": quote["a"]}
-                for quote in self.quotes_list
-            ],
-        }
-
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            output_dir = Path(tmpdirname)
-            output_file = output_dir / "zen_quotes.json"
-
-            with patch.multiple(
-                QuotesStorage, _OUTPUT_DIR=output_dir, _OUTPUT_FILE=output_file
-            ):
-                QuotesStorage.write(self.quotes_model)
-
-            self.assertEqual(
-                output_file.read_text(encoding="utf8"),
-                json.dumps(expected, indent=4),
-            )
-
-
-class TestQuotesStorageRead(BaseFixtureTestCase):
-    def test_pass(self) -> None:
-        with patch(
-            "pathlib.Path.read_text",
-            new=Mock(return_value=self.quotes_model_json_str),
-        ):
-            quotes = QuotesStorage.read()
-        self.assertEqual(
-            quotes.model_dump_json(indent=4), self.quotes_model_json_str
-        )
-
-    def test_file_not_found(self) -> None:
-        with patch(
-            "pathlib.Path.read_text",
-            new=Mock(side_effect=FileNotFoundError),
-        ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            with self.assertRaises(FileNotFoundError):
-                QuotesStorage.read()
-
-            output_file = (
-                Path(__file__).parent.parent.parent
-                / "output"
-                / "zen_quotes.json"
-            )
-            self.assertEqual(
-                cm.records[0].getMessage(),
-                f"Output file not found: {output_file.as_posix()}",
-            )
-
-    def test_invalid_json(self) -> None:
-        read_data = self.quotes_model_json_str.replace("today", "oday", 1)
-
-        with patch(
-            "pathlib.Path.read_text", new=Mock(return_value=read_data)
-        ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            with self.assertRaises(ValidationError):
-                QuotesStorage.read()
-
-            output_file = (
-                Path(__file__).parent.parent.parent
-                / "output"
-                / "zen_quotes.json"
-            )
-            self.assertEqual(
-                cm.records[0].getMessage(),
-                f"Error parsing output file: {output_file.as_posix()}",
-            )
 
 
 class TestQuotes(QuotesFixtureTestCase):
@@ -242,6 +185,86 @@ class TestQuotesRun(QuotesFixtureTestCase):
             mock_quotes_request.assert_not_called()
 
         mock_quotes_write.assert_not_called()
+
+
+class TestQuotesStorage(BaseFixtureTestCase):
+    def test_write(self) -> None:
+        expected = {
+            "last_update": str(date.today()),
+            "today": [
+                {
+                    "quote": self.quotes_list[0]["q"],
+                    "author": self.quotes_list[0]["a"],
+                }
+            ],
+            "quotes": [
+                {"quote": quote["q"], "author": quote["a"]}
+                for quote in self.quotes_list
+            ],
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            output_dir = Path(tmpdirname)
+            output_file = output_dir / "zen_quotes.json"
+
+            with patch.multiple(
+                QuotesStorage, _OUTPUT_DIR=output_dir, _OUTPUT_FILE=output_file
+            ):
+                QuotesStorage.write(self.quotes_model)
+
+            self.assertEqual(
+                output_file.read_text(encoding="utf8"),
+                json.dumps(expected, indent=4),
+            )
+
+
+class TestQuotesStorageRead(BaseFixtureTestCase):
+    def test_pass(self) -> None:
+        with patch(
+            "pathlib.Path.read_text",
+            new=Mock(return_value=self.quotes_model_json_str),
+        ):
+            quotes = QuotesStorage.read()
+        self.assertEqual(
+            quotes.model_dump_json(indent=4), self.quotes_model_json_str
+        )
+
+    def test_file_not_found(self) -> None:
+        with patch(
+            "pathlib.Path.read_text",
+            new=Mock(side_effect=FileNotFoundError),
+        ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
+            with self.assertRaises(FileNotFoundError):
+                QuotesStorage.read()
+
+            output_file = (
+                Path(__file__).parent.parent.parent
+                / "output"
+                / "zen_quotes.json"
+            )
+            self.assertEqual(
+                cm.records[0].getMessage(),
+                f"Output file not found: {output_file.as_posix()}",
+            )
+
+    def test_invalid_json(self) -> None:
+        read_data = self.quotes_model_json_str.replace("today", "oday", 1)
+
+        with patch(
+            "pathlib.Path.read_text", new=Mock(return_value=read_data)
+        ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
+            with self.assertRaises(ValidationError):
+                QuotesStorage.read()
+
+            output_file = (
+                Path(__file__).parent.parent.parent
+                / "output"
+                / "zen_quotes.json"
+            )
+            self.assertEqual(
+                cm.records[0].getMessage(),
+                f"Error parsing output file: {output_file.as_posix()}",
+            )
 
 
 class TestRequestQuotes(BaseFixtureTestCase):
@@ -342,29 +365,6 @@ class TestRequestQuotes(BaseFixtureTestCase):
                 cm.records[0].getMessage(),
                 "Key missing in JSON content: https://zenquotes.io/api/quotes",
             )
-
-
-class TestModule(BaseFixtureTestCase):
-    @patch("sys.stdout", new_callable=StringIO)
-    def test_main(self, mock_stdout: StringIO) -> None:
-        expected = (
-            "TODAY:\n"
-            f"{self.quotes_list[0]['q']} - {self.quotes_list[0]['a']}\n"
-            "\n"
-            "RANDOM:\n"
-            f"{self.quotes_list[1]['q']} - {self.quotes_list[1]['a']}"
-            "\n"
-        )
-
-        with patch(
-            "zen_quotes.main.QuotesStorage.read",
-            new=Mock(return_value=self.quotes_model),
-        ), patch(
-            "zen_quotes.main.choice",
-            new=Mock(return_value=self.quotes_model.quotes[1]),
-        ):
-            main()
-        self.assertEqual(mock_stdout.getvalue(), expected)
 
 
 if __name__ == "__main__":
