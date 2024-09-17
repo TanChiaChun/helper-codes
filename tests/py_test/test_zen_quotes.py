@@ -168,25 +168,6 @@ class TestQuotes(QuotesFixtureTestCase):
         ):
             self.assertIsNone(Quotes().quotes)
 
-    @patch("sys.stdout", new_callable=StringIO)
-    def test_print(self, mock_stdout: StringIO) -> None:
-        self.quotes.quotes = self.quotes_model
-
-        expected = (
-            "TODAY:\n"
-            f"{self.quotes_list[0]['q']} - {self.quotes_list[0]['a']}\n"
-            "\n"
-            "RANDOM:\n"
-            f"{self.quotes_list[1]['q']} - {self.quotes_list[1]['a']}"
-            "\n"
-        )
-        with patch(
-            "zen_quotes.main.choice",
-            new=Mock(return_value=self.quotes.quotes.quotes[1]),
-        ):
-            self.quotes.print()
-        self.assertEqual(mock_stdout.getvalue(), expected)
-
 
 class TestQuotesRun(QuotesFixtureTestCase):
     @patch("sys.stdout", new_callable=StringIO)
@@ -199,16 +180,24 @@ class TestQuotesRun(QuotesFixtureTestCase):
         )
         with patch(
             "zen_quotes.main.request_quotes", new=mock_quotes_requests
-        ), patch.object(self.quotes, "print") as mock_quotes_print:
+        ), patch(
+            "zen_quotes.main.choice",
+            new=Mock(return_value=self.quotes_model.quotes[1]),
+        ):
             self.quotes.run()
-
-            mock_quotes_print.assert_called_once()
 
         mock_quotes_write.assert_called_once_with(self.quotes_model)
 
-        self.assertEqual(
-            mock_stdout.getvalue().split("\n")[0], "Requesting new quotes"
+        expected = (
+            "Requesting new quotes\n"
+            "TODAY:\n"
+            f"{self.quotes_list[0]['q']} - {self.quotes_list[0]['a']}\n"
+            "\n"
+            "RANDOM:\n"
+            f"{self.quotes_list[1]['q']} - {self.quotes_list[1]['a']}"
+            "\n"
         )
+        self.assertEqual(mock_stdout.getvalue(), expected)
 
     @patch("zen_quotes.main.QuotesStorage.write")
     @patch("zen_quotes.main.request_quotes")
@@ -218,7 +207,7 @@ class TestQuotesRun(QuotesFixtureTestCase):
         self.quotes.quotes = self.quotes_model
         self.quotes.quotes.last_update -= timedelta(days=1)
 
-        with patch.object(self.quotes, "print") as mock_quotes_print:
+        with patch.object(self.quotes, "_print") as mock_quotes_print:
             self.quotes.run()
 
             self.assertEqual(mock_quotes_request.call_count, 2)
@@ -245,7 +234,7 @@ class TestQuotesRun(QuotesFixtureTestCase):
     ) -> None:
         self.quotes.quotes = self.quotes_model
 
-        with patch.object(self.quotes, "print") as mock_quotes_print:
+        with patch.object(self.quotes, "_print") as mock_quotes_print:
             self.quotes.run()
 
             mock_quotes_print.assert_called_once()

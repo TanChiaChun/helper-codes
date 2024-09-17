@@ -149,6 +149,7 @@ class QuotesStorage:
         )
 
 
+# pylint: disable-next=too-few-public-methods
 class Quotes:
     """List of Quotes from Zen Quotes."""
 
@@ -159,7 +160,7 @@ class Quotes:
         except (FileNotFoundError, ValidationError):
             self.quotes = None
 
-    def print(self) -> None:
+    def _print(self) -> None:
         """Print TODAY quote and 1 quote randomly from QUOTES."""
         if self.quotes:
             print("TODAY:")
@@ -190,7 +191,7 @@ class Quotes:
                 )
                 QuotesStorage.write(self.quotes)
 
-        self.print()
+        self._print()
 
     def _is_update_required(self) -> bool:
         """Return True if request of new quotes is required."""
