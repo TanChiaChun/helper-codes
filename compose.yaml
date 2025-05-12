@@ -1,0 +1,10 @@
+services:
+  python:
+    build:
+      dockerfile: ./git-hooks/docker/python.Dockerfile
+  bash:
+    build:
+      dockerfile: ./git-hooks/docker/bash.Dockerfile
+  markdown:
+    build:
+      dockerfile: ./git-hooks/docker/markdown.Dockerfile
