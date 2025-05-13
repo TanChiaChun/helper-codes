@@ -1,0 +1,7 @@
+.mypy_cache/
+htmlcov/
+venv/
+git-hooks/.git/
+output/zen_quotes.json
+**/*.pyc
+.coverage
