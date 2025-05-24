@@ -119,6 +119,7 @@ main() {
         return 1
     fi
     update_path
+    PS1='\s-\v \w\$ ' # Update Bash prompt
 
     echo '##################################################'
     source_bash_alias ~/'repo/helper-codes'
