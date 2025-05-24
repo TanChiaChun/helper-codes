@@ -115,13 +115,12 @@ update_path() {
 }
 
 main() {
-    echo '##################################################'
     if ! source_py_sh ~/'repo/helper-codes'; then
         return 1
     fi
-
     update_path
 
+    echo '##################################################'
     source_bash_alias ~/'repo/helper-codes'
     source_git_hooks_ci
 
