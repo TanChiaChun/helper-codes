@@ -13,7 +13,7 @@ from pydantic import ValidationError
 from zen_quotes.main import (
     Quote,
     QuoteMode,
-    Quotes,
+    QuotesManager,
     QuotesModel,
     QuotesStorage,
     logger,
@@ -50,14 +50,14 @@ class BaseFixtureTestCase(unittest.TestCase):
         self.quotes_model_json_str = self.quotes_model.model_dump_json(indent=4)
 
 
-class QuotesFixtureTestCase(BaseFixtureTestCase):
+class QuotesManagerFixtureTestCase(BaseFixtureTestCase):
     def setUp(self) -> None:
         super().setUp()
         with patch(
             "zen_quotes.main.QuotesStorage.read",
             new=Mock(side_effect=FileNotFoundError),
         ):
-            self.quotes = Quotes()
+            self.quotes_manager = QuotesManager()
 
 
 class TestModule(BaseFixtureTestCase):
@@ -96,23 +96,23 @@ class TestQuote(BaseFixtureTestCase):
         )
 
 
-class TestQuotes(QuotesFixtureTestCase):
+class TestQuotesManager(QuotesManagerFixtureTestCase):
     def test_init_quotes_exist(self) -> None:
         with patch(
             "zen_quotes.main.QuotesStorage.read",
             new=Mock(return_value=self.quotes_model),
         ):
-            self.assertIsNotNone(Quotes().quotes)
+            self.assertIsNotNone(QuotesManager().quotes)
 
     def test_init_quotes_none(self) -> None:
         with patch(
             "zen_quotes.main.QuotesStorage.read",
             new=Mock(side_effect=FileNotFoundError),
         ):
-            self.assertIsNone(Quotes().quotes)
+            self.assertIsNone(QuotesManager().quotes)
 
 
-class TestQuotesRun(QuotesFixtureTestCase):
+class TestQuotesManagerRun(QuotesManagerFixtureTestCase):
     @patch("sys.stdout", new_callable=StringIO)
     @patch("zen_quotes.main.QuotesStorage.write")
     def test_pass(
@@ -127,7 +127,7 @@ class TestQuotesRun(QuotesFixtureTestCase):
             "zen_quotes.main.choice",
             new=Mock(return_value=self.quotes_model.quotes[1]),
         ):
-            self.quotes.run()
+            self.quotes_manager.run()
 
         mock_quotes_write.assert_called_once_with(self.quotes_model)
 
@@ -147,11 +147,11 @@ class TestQuotesRun(QuotesFixtureTestCase):
     def test_quotes_yesterday(
         self, mock_quotes_request: MagicMock, mock_quotes_write: MagicMock
     ) -> None:
-        self.quotes.quotes = self.quotes_model
-        self.quotes.quotes.last_update -= timedelta(days=1)
+        self.quotes_manager.quotes = self.quotes_model
+        self.quotes_manager.quotes.last_update -= timedelta(days=1)
 
-        with patch.object(self.quotes, "_print") as mock_quotes_print:
-            self.quotes.run()
+        with patch.object(self.quotes_manager, "_print") as mock_quotes_print:
+            self.quotes_manager.run()
 
             self.assertEqual(mock_quotes_request.call_count, 2)
 
@@ -165,9 +165,9 @@ class TestQuotesRun(QuotesFixtureTestCase):
             "zen_quotes.main.request_quotes",
             new=Mock(side_effect=requests.ConnectionError),
         ):
-            self.quotes.run()
+            self.quotes_manager.run()
 
-        self.assertIsNone(self.quotes.quotes)
+        self.assertIsNone(self.quotes_manager.quotes)
         mock_quotes_request.assert_not_called()
 
     @patch("zen_quotes.main.QuotesStorage.write")
@@ -175,10 +175,10 @@ class TestQuotesRun(QuotesFixtureTestCase):
     def test_no_update(
         self, mock_quotes_request: MagicMock, mock_quotes_write: MagicMock
     ) -> None:
-        self.quotes.quotes = self.quotes_model
+        self.quotes_manager.quotes = self.quotes_model
 
-        with patch.object(self.quotes, "_print") as mock_quotes_print:
-            self.quotes.run()
+        with patch.object(self.quotes_manager, "_print") as mock_quotes_print:
+            self.quotes_manager.run()
 
             mock_quotes_print.assert_called_once()
 

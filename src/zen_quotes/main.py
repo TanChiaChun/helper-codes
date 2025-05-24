@@ -150,8 +150,8 @@ class QuotesStorage:
 
 
 # pylint: disable-next=too-few-public-methods
-class Quotes:
-    """List of Quotes from Zen Quotes."""
+class QuotesManager:
+    """Quotes Manager."""
 
     def __init__(self) -> None:
         self.quotes: Optional[QuotesModel]
@@ -204,7 +204,7 @@ def main() -> None:
     """Main function."""
     logging.basicConfig()
 
-    Quotes().run()
+    QuotesManager().run()
 
 
 if __name__ == "__main__":
