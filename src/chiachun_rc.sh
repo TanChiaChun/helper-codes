@@ -107,12 +107,21 @@ source_py_sh() {
     source "$repo_dir/git-hooks/src/py.sh"
 }
 
+update_path() {
+    if command brew -v >/dev/null 2>&1; then # Check if Homebrew installed
+        PATH="$PATH:$(brew --prefix python)/libexec/bin"
+    fi
+    export PATH
+}
+
 main() {
-    echo '##################################################'
     if ! source_py_sh ~/'repo/helper-codes'; then
         return 1
     fi
+    update_path
+    PS1='\s-\v \w\$ ' # Update Bash prompt
 
+    echo '##################################################'
     source_bash_alias ~/'repo/helper-codes'
     source_git_hooks_ci
 
