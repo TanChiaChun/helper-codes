@@ -15,7 +15,7 @@ setup() {
     [ "$output" == 'bash_alias not sourced' ]
 }
 
-@test "source_completion_git()" {
+@test "source_completion_git_macos()" {
     if [[ "$OSTYPE" == 'darwin'* ]]; then
         echo '# Run: macOS' >&3
 
