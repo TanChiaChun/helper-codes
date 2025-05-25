@@ -8,3 +8,6 @@ services:
   markdown:
     build:
       dockerfile: ./git-hooks/docker/markdown.Dockerfile
+  zenquotes:
+    build:
+      dockerfile: ./docker/zenquotes.Dockerfile
