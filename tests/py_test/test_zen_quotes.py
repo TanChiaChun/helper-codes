@@ -225,9 +225,7 @@ class TestQuotesStorageRead(BaseFixtureTestCase):
             new=Mock(return_value=self.quotes_model_json_str),
         ):
             quotes = QuotesStorage.read()
-        self.assertEqual(
-            quotes.model_dump_json(indent=4), self.quotes_model_json_str
-        )
+        self.assertEqual(quotes, self.quotes)
 
     def test_file_not_found(self) -> None:
         with patch(
