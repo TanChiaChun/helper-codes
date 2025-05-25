@@ -181,8 +181,7 @@ class TestQuotesManagerRun(QuotesManagerFixtureTestCase):
 
             mock_quotes_print.assert_called_once()
 
-            mock_quotes_request.assert_not_called()
-
+        mock_quotes_request.assert_not_called()
         mock_quotes_write.assert_not_called()
 
 
