@@ -191,7 +191,7 @@ class QuotesManager:
         return True
 
     def _print(self) -> None:
-        """Print TODAY quote and 1 quote randomly from QUOTES."""
+        """Print TODAY quote and 1 random quote from QUOTES."""
         if self.quotes:
             print("TODAY:")
             print(self.quotes.today[0])
