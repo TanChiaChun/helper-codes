@@ -18,11 +18,9 @@ run_zen_quotes() {
 }
 
 source_bash_alias() {
-    local repo_dir="$1"
-
-    if [[ -f "$repo_dir/src/bash_alias.sh" ]]; then
+    if [[ -f ~/'repo/helper-codes/src/bash_alias.sh' ]]; then
         # shellcheck source=/dev/null
-        source "$repo_dir/src/bash_alias.sh"
+        source ~/'repo/helper-codes/src/bash_alias.sh'
 
         echo 'Sourced bash_alias'
     else
@@ -96,15 +94,13 @@ source_git_hooks_ci() {
 }
 
 source_py_sh() {
-    local repo_dir="$1"
-
-    if [[ ! -f "$repo_dir/git-hooks/src/py.sh" ]]; then
-        echo "$repo_dir/git-hooks/src/py.sh not found"
+    if [[ ! -f ~/'repo/helper-codes/git-hooks/src/py.sh' ]]; then
+        echo ~/'repo/helper-codes/git-hooks/src/py.sh not found'
         return 1
     fi
 
     # shellcheck source=/dev/null
-    source "$repo_dir/git-hooks/src/py.sh"
+    source ~/'repo/helper-codes/git-hooks/src/py.sh'
 }
 
 update_path() {
@@ -115,14 +111,14 @@ update_path() {
 }
 
 main() {
-    if ! source_py_sh ~/'repo/helper-codes'; then
+    if ! source_py_sh; then
         return 1
     fi
     update_path
     PS1='\s-\v \w\$ ' # Update Bash prompt
 
     echo '##################################################'
-    source_bash_alias ~/'repo/helper-codes'
+    source_bash_alias
     source_git_hooks_ci
 
     source_completion_git

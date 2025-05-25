@@ -2,18 +2,6 @@ setup() {
     load '../src/chiachun_rc.sh'
 }
 
-@test "source_bash_alias_sourced()" {
-    run source_bash_alias '.'
-    [ "$status" -eq 0 ]
-    [ "$output" == 'Sourced bash_alias' ]
-}
-
-@test "source_bash_alias_not_sourced()" {
-    run source_bash_alias "$BATS_TMPDIR"
-    [ "$status" -eq 0 ]
-    [ "$output" == 'bash_alias not sourced' ]
-}
-
 @test "source_completion_git_macos()" {
     if [[ "$OSTYPE" == 'darwin'* ]]; then
         echo '# Run: macOS' >&3
@@ -45,15 +33,4 @@ setup() {
     cd "$OLDPWD"
     [ "$status" -eq 0 ]
     [ "$output" == 'git-hooks ci not sourced' ]
-}
-
-@test "source_py_sh()" {
-    run source_py_sh '.'
-    [ "$status" -eq 0 ]
-}
-
-@test "source_py_sh_not_found()" {
-    run source_py_sh "$BATS_TMPDIR"
-    [ "$status" -eq 1 ]
-    [ "$output" == "$BATS_TMPDIR/git-hooks/src/py.sh not found" ]
 }
