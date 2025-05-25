@@ -34,3 +34,15 @@ setup() {
     [ "$status" -eq 0 ]
     [ "$output" == 'git-hooks ci not sourced' ]
 }
+
+@test "update_path_macos()" {
+    if [[ "$OSTYPE" == 'darwin'* ]]; then
+        echo '# Run: macOS' >&3
+
+        run update_path
+        [ "$status" -eq 0 ]
+        [[ "$PATH" =~ .+'/libexec/bin' ]]
+    else
+        echo "# Skip: $OSTYPE" >&3
+    fi
+}
