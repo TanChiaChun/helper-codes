@@ -11,16 +11,16 @@ EOF
 
 run_zen_quotes() {
     local py_path
-    py_path="$(get_venv_bin_path ~/'repo/_packages')/python"
-    local script_path=~/'repo/helper-codes/src/zen_quotes/main.py'
+    py_path="$(get_venv_bin_path "$HOME/repo/_packages")/python"
+    local script_path="$HOME/repo/helper-codes/src/zen_quotes/main.py"
 
     "$py_path" "$script_path"
 }
 
 source_bash_alias() {
-    if [[ -f ~/'repo/helper-codes/src/bash_alias.sh' ]]; then
+    if [[ -f "$HOME/repo/helper-codes/src/bash_alias.sh" ]]; then
         # shellcheck source=/dev/null
-        source ~/'repo/helper-codes/src/bash_alias.sh'
+        source "$HOME/repo/helper-codes/src/bash_alias.sh"
 
         echo 'Sourced bash_alias'
     else
@@ -94,13 +94,13 @@ source_git_hooks_ci() {
 }
 
 source_py_sh() {
-    if [[ ! -f ~/'repo/helper-codes/git-hooks/src/py.sh' ]]; then
-        echo ~/'repo/helper-codes/git-hooks/src/py.sh not found'
+    if [[ ! -f "$HOME/repo/helper-codes/git-hooks/src/py.sh" ]]; then
+        echo "$HOME/repo/helper-codes/git-hooks/src/py.sh not found"
         return 1
     fi
 
     # shellcheck source=/dev/null
-    source ~/'repo/helper-codes/git-hooks/src/py.sh'
+    source "$HOME/repo/helper-codes/git-hooks/src/py.sh"
 }
 
 update_path() {
