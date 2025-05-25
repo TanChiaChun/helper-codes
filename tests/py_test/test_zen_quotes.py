@@ -153,10 +153,9 @@ class TestQuotesManagerRun(QuotesManagerFixtureTestCase):
         with patch.object(self.quotes_manager, "_print") as mock_quotes_print:
             self.quotes_manager.run()
 
-            self.assertEqual(mock_quotes_request.call_count, 2)
-
             mock_quotes_print.assert_called_once()
 
+        self.assertEqual(mock_quotes_request.call_count, 2)
         mock_quotes_write.assert_called_once()
 
     @patch("zen_quotes.main.QuotesStorage.write")
