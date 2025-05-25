@@ -13,8 +13,8 @@ from pydantic import ValidationError
 from zen_quotes.main import (
     Quote,
     QuoteMode,
+    Quotes,
     QuotesManager,
-    QuotesModel,
     QuotesStorage,
     logger,
     main,
@@ -34,7 +34,7 @@ class BaseFixtureTestCase(unittest.TestCase):
                 "a": "Emily Dickinson",
             },
         ]
-        self.quotes_model = QuotesModel(
+        self.quotes = Quotes(
             last_update=date.today(),
             today=[
                 Quote(
@@ -47,7 +47,7 @@ class BaseFixtureTestCase(unittest.TestCase):
                 for quote in self.quotes_list
             ],
         )
-        self.quotes_model_json_str = self.quotes_model.model_dump_json(indent=4)
+        self.quotes_model_json_str = self.quotes.model_dump_json(indent=4)
 
 
 class QuotesManagerFixtureTestCase(BaseFixtureTestCase):
@@ -74,10 +74,10 @@ class TestModule(BaseFixtureTestCase):
 
         with patch(
             "zen_quotes.main.QuotesStorage.read",
-            new=Mock(return_value=self.quotes_model),
+            new=Mock(return_value=self.quotes),
         ), patch(
             "zen_quotes.main.choice",
-            new=Mock(return_value=self.quotes_model.quotes[1]),
+            new=Mock(return_value=self.quotes.quotes[1]),
         ):
             main()
         self.assertEqual(mock_stdout.getvalue(), expected)
@@ -100,7 +100,7 @@ class TestQuotesManager(QuotesManagerFixtureTestCase):
     def test_init_quotes_exist(self) -> None:
         with patch(
             "zen_quotes.main.QuotesStorage.read",
-            new=Mock(return_value=self.quotes_model),
+            new=Mock(return_value=self.quotes),
         ):
             self.assertIsNotNone(QuotesManager().quotes)
 
@@ -119,17 +119,17 @@ class TestQuotesManagerRun(QuotesManagerFixtureTestCase):
         self, mock_quotes_write: MagicMock, mock_stdout: StringIO
     ) -> None:
         mock_quotes_requests = Mock(
-            side_effect=[self.quotes_model.today, self.quotes_model.quotes]
+            side_effect=[self.quotes.today, self.quotes.quotes]
         )
         with patch(
             "zen_quotes.main.request_quotes", new=mock_quotes_requests
         ), patch(
             "zen_quotes.main.choice",
-            new=Mock(return_value=self.quotes_model.quotes[1]),
+            new=Mock(return_value=self.quotes.quotes[1]),
         ):
             self.quotes_manager.run()
 
-        mock_quotes_write.assert_called_once_with(self.quotes_model)
+        mock_quotes_write.assert_called_once_with(self.quotes)
 
         expected = (
             "Requesting new quotes\n"
@@ -147,7 +147,7 @@ class TestQuotesManagerRun(QuotesManagerFixtureTestCase):
     def test_quotes_yesterday(
         self, mock_quotes_request: MagicMock, mock_quotes_write: MagicMock
     ) -> None:
-        self.quotes_manager.quotes = self.quotes_model
+        self.quotes_manager.quotes = self.quotes
         self.quotes_manager.quotes.last_update -= timedelta(days=1)
 
         with patch.object(self.quotes_manager, "_print") as mock_quotes_print:
@@ -175,7 +175,7 @@ class TestQuotesManagerRun(QuotesManagerFixtureTestCase):
     def test_no_update(
         self, mock_quotes_request: MagicMock, mock_quotes_write: MagicMock
     ) -> None:
-        self.quotes_manager.quotes = self.quotes_model
+        self.quotes_manager.quotes = self.quotes
 
         with patch.object(self.quotes_manager, "_print") as mock_quotes_print:
             self.quotes_manager.run()
@@ -210,7 +210,7 @@ class TestQuotesStorage(BaseFixtureTestCase):
             with patch.multiple(
                 QuotesStorage, _OUTPUT_DIR=output_dir, _OUTPUT_FILE=output_file
             ):
-                QuotesStorage.write(self.quotes_model)
+                QuotesStorage.write(self.quotes)
 
             self.assertEqual(
                 output_file.read_text(encoding="utf8"),
@@ -290,7 +290,7 @@ class TestRequestQuotes(BaseFixtureTestCase):
         with patch("requests.get", new=Mock(return_value=mock_response)):
             self.assertEqual(
                 request_quotes(QuoteMode.QUOTES),
-                self.quotes_model.quotes,
+                self.quotes.quotes,
             )
 
     def test_connection_error(self) -> None:

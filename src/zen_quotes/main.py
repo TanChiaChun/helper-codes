@@ -30,7 +30,7 @@ class Quote(BaseModel):
         return f"{self.quote} - {self.author}"
 
 
-class QuotesModel(BaseModel):
+class Quotes(BaseModel):
     """List of Quotes from Zen Quotes."""
 
     last_update: date
@@ -101,7 +101,7 @@ class QuotesStorage:
     _OUTPUT_FILE = _OUTPUT_DIR / "zen_quotes.json"
 
     @classmethod
-    def read(cls) -> QuotesModel:
+    def read(cls) -> Quotes:
         """Read quotes from JSON file.
 
         Returns:
@@ -122,7 +122,7 @@ class QuotesStorage:
             raise
 
         try:
-            quotes = QuotesModel.model_validate_json(j)
+            quotes = Quotes.model_validate_json(j)
         except ValidationError:
             logger.warning(
                 "Error parsing output file: %s", cls._OUTPUT_FILE.as_posix()
@@ -132,7 +132,7 @@ class QuotesStorage:
         return quotes
 
     @classmethod
-    def write(cls, quotes: QuotesModel) -> None:
+    def write(cls, quotes: Quotes) -> None:
         """Write quotes to JSON file.
 
         - Create output directory if not exist.
@@ -154,7 +154,7 @@ class QuotesManager:
     """Quotes Manager."""
 
     def __init__(self) -> None:
-        self.quotes: Optional[QuotesModel]
+        self.quotes: Optional[Quotes]
         try:
             self.quotes = QuotesStorage.read()
         except (FileNotFoundError, ValidationError):
@@ -177,7 +177,7 @@ class QuotesManager:
             ):
                 pass
             else:
-                self.quotes = QuotesModel(
+                self.quotes = Quotes(
                     last_update=date.today(), today=today, quotes=quotes
                 )
                 QuotesStorage.write(self.quotes)
