@@ -205,7 +205,7 @@ class TestQuotesStorage(BaseFixtureTestCase):
         expected = json.dumps(expected_json, indent=4)
 
         with tempfile.TemporaryDirectory() as tmpdirname:
-            output_dir = Path(tmpdirname)
+            output_dir = Path(tmpdirname) / "output"
             output_file = output_dir / "zen_quotes.json"
 
             with patch.multiple(
