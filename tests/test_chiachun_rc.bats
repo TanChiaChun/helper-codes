@@ -1,6 +1,5 @@
 setup() {
     load '../src/chiachun_rc.sh'
-    load '../git-hooks/src/helper.sh'
 }
 
 @test "source_bash_alias_sourced()" {
