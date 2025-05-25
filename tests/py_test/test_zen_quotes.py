@@ -159,7 +159,7 @@ class TestQuotesManagerRun(QuotesManagerFixtureTestCase):
         mock_quotes_write.assert_called_once()
 
     @patch("zen_quotes.main.QuotesStorage.write")
-    def test_request_quotes_error(self, mock_quotes_request: MagicMock) -> None:
+    def test_request_quotes_error(self, mock_quotes_write: MagicMock) -> None:
         with patch(
             "zen_quotes.main.request_quotes",
             new=Mock(side_effect=requests.ConnectionError),
@@ -167,7 +167,7 @@ class TestQuotesManagerRun(QuotesManagerFixtureTestCase):
             self.quotes_manager.run()
 
         self.assertIsNone(self.quotes_manager.quotes)
-        mock_quotes_request.assert_not_called()
+        mock_quotes_write.assert_not_called()
 
     @patch("zen_quotes.main.QuotesStorage.write")
     @patch("zen_quotes.main.request_quotes")
