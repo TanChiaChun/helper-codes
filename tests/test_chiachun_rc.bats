@@ -39,8 +39,7 @@ setup() {
     if [[ "$OSTYPE" == 'darwin'* ]]; then
         echo '# Run: macOS' >&3
 
-        run update_path
-        [ "$status" -eq 0 ]
+        update_path
         [[ "$PATH" =~ .+'/libexec/bin' ]]
     else
         echo "# Skip: $OSTYPE" >&3
