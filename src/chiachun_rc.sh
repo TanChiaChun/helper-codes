@@ -41,7 +41,7 @@ source_bash_completion() {
 
 source_completion_git() {
     local git_path
-    git_path="$(which git)"
+    git_path="$(command -v git)"
     local git_symlink_path
     git_symlink_path="$(readlink "$git_path")"
     local git_dir="${git_path%/*}/${git_symlink_path%/*}"
