@@ -189,7 +189,7 @@ class TestQuotesManagerRun(QuotesManagerFixtureTestCase):
 
 class TestQuotesStorage(BaseFixtureTestCase):
     def test_write(self) -> None:
-        expected = {
+        expected_json = {
             "last_update": str(date.today()),
             "today": [
                 {
@@ -202,6 +202,7 @@ class TestQuotesStorage(BaseFixtureTestCase):
                 for quote in self.quotes_list
             ],
         }
+        expected = json.dumps(expected_json, indent=4)
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             output_dir = Path(tmpdirname)
@@ -212,10 +213,7 @@ class TestQuotesStorage(BaseFixtureTestCase):
             ):
                 QuotesStorage.write(self.quotes)
 
-            self.assertEqual(
-                output_file.read_text(encoding="utf8"),
-                json.dumps(expected, indent=4),
-            )
+            self.assertEqual(output_file.read_text(encoding="utf8"), expected)
 
 
 class TestQuotesStorageRead(BaseFixtureTestCase):
