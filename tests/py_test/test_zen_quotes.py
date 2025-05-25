@@ -96,7 +96,7 @@ class TestQuote(BaseFixtureTestCase):
         )
 
 
-class TestQuotesManager(QuotesManagerFixtureTestCase):
+class TestQuotesManager(BaseFixtureTestCase):
     def test_init_quotes_exist(self) -> None:
         with patch(
             "zen_quotes.main.QuotesStorage.read",
