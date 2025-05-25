@@ -104,7 +104,7 @@ source_py_sh() {
 }
 
 update_path() {
-    if command brew -v >/dev/null 2>&1; then # Check if Homebrew installed
+    if command -v brew >/dev/null 2>&1; then # Check if Homebrew installed
         PATH="$PATH:$(brew --prefix python)/libexec/bin"
     fi
     export PATH
