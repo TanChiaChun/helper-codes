@@ -161,7 +161,7 @@ class QuotesManager:
             self.quotes = None
 
     def run(self) -> None:
-        """Read from local JSON file & update if required."""
+        """Request new quotes if required, print quotes."""
         if self._is_update_required():
             print("Requesting new quotes")
 
