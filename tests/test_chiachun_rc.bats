@@ -1,21 +1,8 @@
 setup() {
     load '../src/chiachun_rc.sh'
-    load '../git-hooks/src/helper.sh'
 }
 
-@test "source_bash_alias_sourced()" {
-    run source_bash_alias '.'
-    [ "$status" -eq 0 ]
-    [ "$output" == 'Sourced bash_alias' ]
-}
-
-@test "source_bash_alias_not_sourced()" {
-    run source_bash_alias "$BATS_TMPDIR"
-    [ "$status" -eq 0 ]
-    [ "$output" == 'bash_alias not sourced' ]
-}
-
-@test "source_completion_git()" {
+@test "source_completion_git_macos()" {
     if [[ "$OSTYPE" == 'darwin'* ]]; then
         echo '# Run: macOS' >&3
 
@@ -48,13 +35,15 @@ setup() {
     [ "$output" == 'git-hooks ci not sourced' ]
 }
 
-@test "source_py_sh()" {
-    run source_py_sh '.'
-    [ "$status" -eq 0 ]
-}
+@test "update_path_macos()" {
+    if [[ "$OSTYPE" == 'darwin'* ]]; then
+        echo '# Run: macOS' >&3
 
-@test "source_py_sh_not_found()" {
-    run source_py_sh "$BATS_TMPDIR"
-    [ "$status" -eq 1 ]
-    [ "$output" == "$BATS_TMPDIR/git-hooks/src/py.sh not found" ]
+        local old_path="$PATH"
+        update_path
+        [ "$PATH" != "$old_path" ]
+        [[ "$PATH" =~ .+'/libexec/bin' ]]
+    else
+        echo "# Skip: $OSTYPE" >&3
+    fi
 }

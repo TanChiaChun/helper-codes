@@ -11,18 +11,16 @@ EOF
 
 run_zen_quotes() {
     local py_path
-    py_path="$(get_venv_bin_path ~/'repo/_packages')/python"
-    local script_path=~/'repo/helper-codes/src/zen_quotes/zen_quotes.py'
+    py_path="$(get_venv_bin_path "$HOME/repo/_packages")/python"
+    local script_path="$HOME/repo/helper-codes/src/zen_quotes/main.py"
 
     "$py_path" "$script_path"
 }
 
 source_bash_alias() {
-    local repo_dir="$1"
-
-    if [[ -f "$repo_dir/src/bash_alias.sh" ]]; then
+    if [[ -f "$HOME/repo/helper-codes/src/bash_alias.sh" ]]; then
         # shellcheck source=/dev/null
-        source "$repo_dir/src/bash_alias.sh"
+        source "$HOME/repo/helper-codes/src/bash_alias.sh"
 
         echo 'Sourced bash_alias'
     else
@@ -43,7 +41,7 @@ source_bash_completion() {
 
 source_completion_git() {
     local git_path
-    git_path="$(which git)"
+    git_path="$(command -v git)"
     local git_symlink_path
     git_symlink_path="$(readlink "$git_path")"
     local git_dir="${git_path%/*}/${git_symlink_path%/*}"
@@ -96,33 +94,31 @@ source_git_hooks_ci() {
 }
 
 source_py_sh() {
-    local repo_dir="$1"
-
-    if [[ ! -f "$repo_dir/git-hooks/src/py.sh" ]]; then
-        echo "$repo_dir/git-hooks/src/py.sh not found"
+    if [[ ! -f "$HOME/repo/helper-codes/git-hooks/src/py.sh" ]]; then
+        echo "$HOME/repo/helper-codes/git-hooks/src/py.sh not found"
         return 1
     fi
 
     # shellcheck source=/dev/null
-    source "$repo_dir/git-hooks/src/py.sh"
+    source "$HOME/repo/helper-codes/git-hooks/src/py.sh"
 }
 
 update_path() {
-    if command brew -v >/dev/null 2>&1; then # Check if Homebrew installed
+    if command -v brew >/dev/null 2>&1; then # Check if Homebrew installed
         PATH="$PATH:$(brew --prefix python)/libexec/bin"
     fi
     export PATH
 }
 
 main() {
-    if ! source_py_sh ~/'repo/helper-codes'; then
+    if ! source_py_sh; then
         return 1
     fi
     update_path
     PS1='\s-\v \w\$ ' # Update Bash prompt
 
     echo '##################################################'
-    source_bash_alias ~/'repo/helper-codes'
+    source_bash_alias
     source_git_hooks_ci
 
     source_completion_git
