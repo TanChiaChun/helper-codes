@@ -6,3 +6,5 @@ USER python
 COPY --chown=python requirements.txt /home/python/repo/
 WORKDIR /home/python/repo/
 RUN pip install --no-cache-dir --requirement './requirements.txt'
+
+COPY --chown=python src/zen_quotes/main.py /home/python/repo/src/zen_quotes/
