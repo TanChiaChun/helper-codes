@@ -11,3 +11,10 @@ services:
   zenquotes:
     build:
       dockerfile: ./docker/zenquotes.Dockerfile
+    volumes:
+      - type: volume
+        source: zenquotes
+        target: /home/python/repo/output
+
+volumes:
+  zenquotes:
