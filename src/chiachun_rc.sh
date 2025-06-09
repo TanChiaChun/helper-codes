@@ -10,11 +10,33 @@ EOF
 }
 
 run_zen_quotes() {
-    local py_path
-    py_path="$(get_venv_bin_path "$HOME/repo/_packages")/python"
-    local script_path="$HOME/repo/helper-codes/src/zen_quotes/main.py"
+    local current_script_path
+    current_script_path="$(readlink -f "${BASH_SOURCE[0]}")"
+    local current_script_dir="${current_script_path%/*}"
 
-    "$py_path" "$script_path"
+    local compose_file="$current_script_dir/../compose.yaml"
+    local service='zenquotes'
+
+    if ! docker compose --file "$compose_file" up \
+        --detach "$service" >/dev/null 2>&1; then
+        echo "docker compose up fail for $service service"
+        return 1
+    fi
+    if ! docker compose --file "$compose_file" wait \
+        "$service" >/dev/null 2>&1; then
+        echo "docker compose wait fail for $service service"
+        return 1
+    fi
+    if ! docker compose --file "$compose_file" logs \
+        --no-log-prefix "$service"; then
+        echo "docker compose logs fail for $service service"
+        return 1
+    fi
+    if ! docker compose --file "$compose_file" down \
+        "$service" >/dev/null 2>&1; then
+        echo "docker compose down fail for $service service"
+        return 1
+    fi
 }
 
 source_bash_alias() {
