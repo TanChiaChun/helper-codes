@@ -94,6 +94,57 @@ def request_quotes(quote_mode: QuoteMode) -> list[Quote]:
     return quotes
 
 
+# pylint: disable-next=too-few-public-methods
+class QuotesManager:
+    """Quotes Manager."""
+
+    def __init__(self) -> None:
+        self.quotes: Optional[Quotes]
+        try:
+            self.quotes = QuotesStorage.read()
+        except (FileNotFoundError, ValidationError):
+            self.quotes = None
+
+    def run(self) -> None:
+        """Request new quotes if required, print quotes."""
+        if self._is_update_required():
+            print("Requesting new quotes")
+
+            try:
+                today = request_quotes(QuoteMode.TODAY)
+                quotes = request_quotes(QuoteMode.QUOTES)
+            except (
+                requests.ConnectionError,
+                requests.Timeout,
+                requests.HTTPError,
+                requests.exceptions.JSONDecodeError,
+                KeyError,
+            ):
+                pass
+            else:
+                self.quotes = Quotes(
+                    last_update=date.today(), today=today, quotes=quotes
+                )
+                QuotesStorage.write(self.quotes)
+
+        self._print()
+
+    def _is_update_required(self) -> bool:
+        """Return True if request of new quotes is required."""
+        if self.quotes and self.quotes.last_update == date.today():
+            return False
+        return True
+
+    def _print(self) -> None:
+        """Print TODAY quote and 1 random quote from QUOTES."""
+        if self.quotes:
+            print("TODAY:")
+            print(self.quotes.today[0])
+            print("")
+            print("RANDOM:")
+            print(choice(self.quotes.quotes))
+
+
 class QuotesStorage:
     """File I/O for `QuotesModel`."""
 
@@ -147,57 +198,6 @@ class QuotesStorage:
         cls._OUTPUT_FILE.write_text(
             quotes.model_dump_json(indent=4), encoding="utf8"
         )
-
-
-# pylint: disable-next=too-few-public-methods
-class QuotesManager:
-    """Quotes Manager."""
-
-    def __init__(self) -> None:
-        self.quotes: Optional[Quotes]
-        try:
-            self.quotes = QuotesStorage.read()
-        except (FileNotFoundError, ValidationError):
-            self.quotes = None
-
-    def run(self) -> None:
-        """Request new quotes if required, print quotes."""
-        if self._is_update_required():
-            print("Requesting new quotes")
-
-            try:
-                today = request_quotes(QuoteMode.TODAY)
-                quotes = request_quotes(QuoteMode.QUOTES)
-            except (
-                requests.ConnectionError,
-                requests.Timeout,
-                requests.HTTPError,
-                requests.exceptions.JSONDecodeError,
-                KeyError,
-            ):
-                pass
-            else:
-                self.quotes = Quotes(
-                    last_update=date.today(), today=today, quotes=quotes
-                )
-                QuotesStorage.write(self.quotes)
-
-        self._print()
-
-    def _is_update_required(self) -> bool:
-        """Return True if request of new quotes is required."""
-        if self.quotes and self.quotes.last_update == date.today():
-            return False
-        return True
-
-    def _print(self) -> None:
-        """Print TODAY quote and 1 random quote from QUOTES."""
-        if self.quotes:
-            print("TODAY:")
-            print(self.quotes.today[0])
-            print("")
-            print("RANDOM:")
-            print(choice(self.quotes.quotes))
 
 
 def main() -> None:
