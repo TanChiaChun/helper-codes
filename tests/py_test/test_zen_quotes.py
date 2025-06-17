@@ -144,6 +144,21 @@ class TestQuotesManagerRun(QuotesManagerFixtureTestCase):
 
     @patch("zen_quotes.main.QuotesStorage.write")
     @patch("zen_quotes.main.request_quotes")
+    def test_no_update(
+        self, mock_quotes_request: MagicMock, mock_quotes_write: MagicMock
+    ) -> None:
+        self.quotes_manager.quotes = self.quotes
+
+        with patch.object(self.quotes_manager, "_print") as mock_quotes_print:
+            self.quotes_manager.run()
+
+            mock_quotes_print.assert_called_once()
+
+        mock_quotes_request.assert_not_called()
+        mock_quotes_write.assert_not_called()
+
+    @patch("zen_quotes.main.QuotesStorage.write")
+    @patch("zen_quotes.main.request_quotes")
     def test_quotes_yesterday(
         self, mock_quotes_request: MagicMock, mock_quotes_write: MagicMock
     ) -> None:
@@ -167,21 +182,6 @@ class TestQuotesManagerRun(QuotesManagerFixtureTestCase):
             self.quotes_manager.run()
 
         self.assertIsNone(self.quotes_manager.quotes)
-        mock_quotes_write.assert_not_called()
-
-    @patch("zen_quotes.main.QuotesStorage.write")
-    @patch("zen_quotes.main.request_quotes")
-    def test_no_update(
-        self, mock_quotes_request: MagicMock, mock_quotes_write: MagicMock
-    ) -> None:
-        self.quotes_manager.quotes = self.quotes
-
-        with patch.object(self.quotes_manager, "_print") as mock_quotes_print:
-            self.quotes_manager.run()
-
-            mock_quotes_print.assert_called_once()
-
-        mock_quotes_request.assert_not_called()
         mock_quotes_write.assert_not_called()
 
 
@@ -301,20 +301,6 @@ class TestRequestQuotes(BaseFixtureTestCase):
                 ),
             )
 
-    def test_timeout(self) -> None:
-        with patch(
-            "requests.get", new=Mock(side_effect=requests.Timeout)
-        ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            with self.assertRaises(requests.Timeout):
-                request_quotes(QuoteMode.QUOTES)
-            self.assertEqual(
-                cm.records[0].getMessage(),
-                (
-                    "Timeout when requesting Zen Quotes: "
-                    "https://zenquotes.io/api/quotes"
-                ),
-            )
-
     def test_http_error(self) -> None:
         response = requests.Response()
         response.status_code = 400
@@ -358,6 +344,20 @@ class TestRequestQuotes(BaseFixtureTestCase):
             self.assertEqual(
                 cm.records[0].getMessage(),
                 "Key missing in JSON content: https://zenquotes.io/api/quotes",
+            )
+
+    def test_timeout(self) -> None:
+        with patch(
+            "requests.get", new=Mock(side_effect=requests.Timeout)
+        ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
+            with self.assertRaises(requests.Timeout):
+                request_quotes(QuoteMode.QUOTES)
+            self.assertEqual(
+                cm.records[0].getMessage(),
+                (
+                    "Timeout when requesting Zen Quotes: "
+                    "https://zenquotes.io/api/quotes"
+                ),
             )
 
 
