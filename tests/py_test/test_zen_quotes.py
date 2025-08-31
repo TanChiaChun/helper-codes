@@ -228,8 +228,7 @@ class TestQuotesStorageRead(BaseFixtureTestCase):
             "pathlib.Path.read_text",
             new=Mock(side_effect=FileNotFoundError),
         ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            with self.assertRaises(FileNotFoundError):
-                QuotesStorage.read()
+            self.assertRaises(FileNotFoundError, QuotesStorage.read)
 
             output_file = (
                 Path(__file__).parent.parent.parent
@@ -247,8 +246,7 @@ class TestQuotesStorageRead(BaseFixtureTestCase):
         with patch(
             "pathlib.Path.read_text", new=Mock(return_value=read_data)
         ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            with self.assertRaises(ValidationError):
-                QuotesStorage.read()
+            self.assertRaises(ValidationError, QuotesStorage.read)
 
             output_file = (
                 Path(__file__).parent.parent.parent
@@ -291,8 +289,9 @@ class TestRequestQuotes(BaseFixtureTestCase):
         with patch(
             "requests.get", new=Mock(side_effect=requests.ConnectionError)
         ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            with self.assertRaises(requests.ConnectionError):
-                request_quotes(QuoteMode.QUOTES)
+            self.assertRaises(
+                requests.ConnectionError, request_quotes, QuoteMode.QUOTES
+            )
             self.assertEqual(
                 cm.records[0].getMessage(),
                 (
@@ -308,8 +307,9 @@ class TestRequestQuotes(BaseFixtureTestCase):
         with patch(
             "requests.get", new=Mock(return_value=response)
         ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            with self.assertRaises(requests.HTTPError):
-                request_quotes(QuoteMode.QUOTES)
+            self.assertRaises(
+                requests.HTTPError, request_quotes, QuoteMode.QUOTES
+            )
             self.assertEqual(
                 cm.records[0].getMessage(),
                 "Invalid HTTP status code: https://zenquotes.io/api/quotes",
@@ -321,8 +321,11 @@ class TestRequestQuotes(BaseFixtureTestCase):
         with patch.object(response, "raise_for_status"), patch(
             "requests.get", new=Mock(return_value=response)
         ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            with self.assertRaises(requests.exceptions.JSONDecodeError):
-                request_quotes(QuoteMode.QUOTES)
+            self.assertRaises(
+                requests.exceptions.JSONDecodeError,
+                request_quotes,
+                QuoteMode.QUOTES,
+            )
             self.assertEqual(
                 cm.records[0].getMessage(),
                 (
@@ -339,8 +342,7 @@ class TestRequestQuotes(BaseFixtureTestCase):
         with patch(
             "requests.get", new=Mock(return_value=mock_response)
         ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            with self.assertRaises(KeyError):
-                request_quotes(QuoteMode.QUOTES)
+            self.assertRaises(KeyError, request_quotes, QuoteMode.QUOTES)
             self.assertEqual(
                 cm.records[0].getMessage(),
                 "Key missing in JSON content: https://zenquotes.io/api/quotes",
@@ -350,8 +352,9 @@ class TestRequestQuotes(BaseFixtureTestCase):
         with patch(
             "requests.get", new=Mock(side_effect=requests.Timeout)
         ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            with self.assertRaises(requests.Timeout):
-                request_quotes(QuoteMode.QUOTES)
+            self.assertRaises(
+                requests.Timeout, request_quotes, QuoteMode.QUOTES
+            )
             self.assertEqual(
                 cm.records[0].getMessage(),
                 (
