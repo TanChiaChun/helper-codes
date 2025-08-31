@@ -10,9 +10,10 @@ EOF
 }
 
 run_zen_quotes() {
+    local repo_path="$HOME/repo/helper-codes"
     local py_path
-    py_path="$(get_venv_bin_path "$HOME/repo/_packages")/python"
-    local script_path="$HOME/repo/helper-codes/src/zen_quotes/main.py"
+    py_path="$(get_venv_bin_path "$repo_path")/python"
+    local script_path="$repo_path/src/zen_quotes/main.py"
 
     "$py_path" "$script_path"
 }
