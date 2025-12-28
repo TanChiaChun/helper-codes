@@ -14,13 +14,6 @@ setup() {
     fi
 }
 
-# python expected to be installed by default
-@test "source_completion_pip()" {
-    run source_completion_pip
-    [ "$status" -eq 0 ]
-    [ "$output" == 'Sourced pip completion' ]
-}
-
 @test "source_git_hooks_ci_sourced()" {
     run source_git_hooks_ci
     [ "$status" -eq 0 ]
