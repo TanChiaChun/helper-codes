@@ -38,24 +38,6 @@ source_bash_completion() {
     fi
 }
 
-source_completion_git() {
-    local git_path
-    git_path="$(command -v git)"
-    local git_symlink_path
-    git_symlink_path="$(readlink "$git_path")"
-    local git_dir="${git_path%/*}/${git_symlink_path%/*}"
-    local filename="${git_dir%/*}/share/zsh/site-functions/git-completion.bash"
-
-    if [[ -f "$filename" ]]; then
-        # shellcheck source=/dev/null
-        source "$filename"
-
-        echo 'Sourced Git completion'
-    else
-        echo 'Git completion not sourced'
-    fi
-}
-
 source_git_hooks_ci() {
     if [[ -f './git-hooks/src/ci.sh' ]]; then
         # shellcheck source=/dev/null
@@ -95,7 +77,6 @@ main() {
     source_bash_alias
     source_git_hooks_ci
 
-    source_completion_git
     source_bash_completion
 
     if (is_django_project); then
