@@ -31,9 +31,10 @@ source_bash_completion() {
     if [[ -r '/opt/homebrew/etc/profile.d/bash_completion.sh' ]]; then
         # shellcheck source=/dev/null
         source '/opt/homebrew/etc/profile.d/bash_completion.sh'
+
+        echo 'Sourced bash_completion'
     else
-        echo 'bash_completion not found'
-        return 1
+        echo 'bash_completion not sourced'
     fi
 }
 
@@ -64,19 +65,6 @@ source_completion_pip() {
         echo 'Sourced pip completion'
     else
         echo 'pip completion not sourced'
-    fi
-}
-
-source_completion_poetry() {
-    local completion
-
-    # shellcheck source=/dev/null
-    if source_bash_completion &&
-        completion="$(poetry completions bash)" &&
-        source <(echo "$completion"); then
-        echo 'Sourced Poetry completion'
-    else
-        echo 'Poetry completion not sourced'
     fi
 }
 
@@ -121,7 +109,7 @@ main() {
 
     source_completion_git
     source_completion_pip
-    source_completion_poetry
+    source_bash_completion
 
     if (is_django_project); then
         set_django_env_var
