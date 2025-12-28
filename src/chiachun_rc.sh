@@ -11,11 +11,8 @@ EOF
 
 run_zen_quotes() {
     local repo_path="$HOME/repo/helper-codes"
-    local py_path
-    py_path="$(get_venv_bin_path "$repo_path")/python"
-    local script_path="$repo_path/src/zen_quotes/main.py"
 
-    "$py_path" "$script_path"
+    uv run --project "$repo_path" "$repo_path/src/zen_quotes/main.py"
 }
 
 source_bash_alias() {
@@ -34,52 +31,10 @@ source_bash_completion() {
     if [[ -r '/opt/homebrew/etc/profile.d/bash_completion.sh' ]]; then
         # shellcheck source=/dev/null
         source '/opt/homebrew/etc/profile.d/bash_completion.sh'
+
+        echo 'Sourced bash_completion'
     else
-        echo 'bash_completion not found'
-        return 1
-    fi
-}
-
-source_completion_git() {
-    local git_path
-    git_path="$(command -v git)"
-    local git_symlink_path
-    git_symlink_path="$(readlink "$git_path")"
-    local git_dir="${git_path%/*}/${git_symlink_path%/*}"
-    local filename="${git_dir%/*}/share/zsh/site-functions/git-completion.bash"
-
-    if [[ -f "$filename" ]]; then
-        # shellcheck source=/dev/null
-        source "$filename"
-
-        echo 'Sourced Git completion'
-    else
-        echo 'Git completion not sourced'
-    fi
-}
-
-source_completion_pip() {
-    local completion
-
-    # shellcheck source=/dev/null
-    if completion="$(python -m pip completion --bash)" &&
-        source <(echo "$completion"); then
-        echo 'Sourced pip completion'
-    else
-        echo 'pip completion not sourced'
-    fi
-}
-
-source_completion_poetry() {
-    local completion
-
-    # shellcheck source=/dev/null
-    if source_bash_completion &&
-        completion="$(poetry completions bash)" &&
-        source <(echo "$completion"); then
-        echo 'Sourced Poetry completion'
-    else
-        echo 'Poetry completion not sourced'
+        echo 'bash_completion not sourced'
     fi
 }
 
@@ -122,9 +77,7 @@ main() {
     source_bash_alias
     source_git_hooks_ci
 
-    source_completion_git
-    source_completion_pip
-    source_completion_poetry
+    source_bash_completion
 
     if (is_django_project); then
         set_django_env_var
