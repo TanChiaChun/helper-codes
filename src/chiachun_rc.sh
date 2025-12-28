@@ -11,11 +11,8 @@ EOF
 
 run_zen_quotes() {
     local repo_path="$HOME/repo/helper-codes"
-    local py_path
-    py_path="$(get_venv_bin_path "$repo_path")/python"
-    local script_path="$repo_path/src/zen_quotes/main.py"
 
-    "$py_path" "$script_path"
+    uv run --project "$repo_path" "$repo_path/src/zen_quotes/main.py"
 }
 
 source_bash_alias() {
