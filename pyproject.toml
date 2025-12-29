@@ -14,5 +14,6 @@ dev = [
     "isort",
     "mypy",
     "pylint",
+    "ruff",
     "types-requests",
 ]
