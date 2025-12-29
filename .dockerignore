@@ -1,7 +1,12 @@
-.mypy_cache/
-htmlcov/
+# Python
 .venv/
-git-hooks/.git/
-output/zen_quotes.json
 **/*.pyc
+.mypy_cache/
 .coverage
+htmlcov/
+
+# Submodule
+git-hooks/.git/
+
+# Project
+output/zen_quotes.json

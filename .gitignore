@@ -1,3 +1,6 @@
+# Python
 *.pyc
 .coverage
+
+# Project
 output/zen_quotes.json
