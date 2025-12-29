@@ -1,6 +1,7 @@
 # Python
 .venv/
 **/*.pyc
+.ruff_cache/
 .mypy_cache/
 .coverage
 htmlcov/

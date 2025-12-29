@@ -16,6 +16,7 @@ set_alias() {
     alias py=python
     alias pyc=run_ci_python
     alias pycov=run_ci_python_test_coverage_py
+    alias rufflw=run_ci_python_ruff_lint_write
     alias shc=run_ci_bash
     alias shfmtw=run_ci_bash_shfmt_write
     alias vuec=run_ci_vue
