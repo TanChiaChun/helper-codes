@@ -10,10 +10,12 @@ dependencies = [
 [dependency-groups]
 dev = [
     "black",
-    "coverage",
     "isort",
     "mypy",
     "pylint",
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
     "ruff",
     "types-requests",
 ]
