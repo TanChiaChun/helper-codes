@@ -1,368 +1,449 @@
 import json
 import logging
-import tempfile
-import unittest
+import pathlib
 from datetime import date, timedelta
-from io import StringIO
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
+import pytest
 import requests
 from pydantic import ValidationError
+from pytest_mock import MockerFixture
 
-from zen_quotes.main import (
-    Quote,
-    QuoteMode,
-    Quotes,
-    QuotesManager,
-    QuotesStorage,
-    logger,
-    main,
-    request_quotes,
-)
+import zen_quotes.main
 
 
-class BaseFixtureTestCase(unittest.TestCase):
-    def setUp(self) -> None:
-        self.quotes_list = [
+@pytest.fixture(name="quotes_list")
+def quotes_list_fixture() -> list[dict[str, str]]:
+    return [
+        {
+            "q": "A crisis is an opportunity riding the dangerous wind.",
+            "a": "Chinese Proverb",
+        },
+        {
+            "q": "Till it has loved, no man or woman can become itself.",
+            "a": "Emily Dickinson",
+        },
+    ]
+
+
+@pytest.fixture(name="quotes")
+def quotes_fixture(quotes_list: list[dict[str, str]]) -> zen_quotes.main.Quotes:
+    return zen_quotes.main.Quotes(
+        last_update=date.today(),
+        today=[
+            zen_quotes.main.Quote(
+                quote=quotes_list[0]["q"], author=quotes_list[0]["a"]
+            )
+        ],
+        quotes=[
+            zen_quotes.main.Quote(quote=quote["q"], author=quote["a"])
+            for quote in quotes_list
+        ],
+    )
+
+
+def test_main(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    quotes_list: list[dict[str, str]],
+    quotes: zen_quotes.main.Quotes,
+) -> None:
+    monkeypatch.setattr(zen_quotes.main.QuotesStorage, "read", lambda: quotes)
+    monkeypatch.setattr(
+        zen_quotes.main, "choice", lambda list: quotes.quotes[1]
+    )
+
+    zen_quotes.main.main()
+
+    assert capsys.readouterr().out == (
+        "TODAY:\n"
+        f"{quotes_list[0]['q']} - {quotes_list[0]['a']}\n"
+        "\n"
+        "RANDOM:\n"
+        f"{quotes_list[1]['q']} - {quotes_list[1]['a']}"
+        "\n"
+    )
+
+
+def test_quotes_manager_init_quotes_exist(
+    monkeypatch: pytest.MonkeyPatch, quotes: zen_quotes.main.Quotes
+) -> None:
+    monkeypatch.setattr(zen_quotes.main.QuotesStorage, "read", lambda: quotes)
+
+    assert zen_quotes.main.QuotesManager() is not None
+
+
+def test_quotes_manager_init_quotes_none(
+    monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture
+) -> None:
+    monkeypatch.setattr(
+        zen_quotes.main.QuotesStorage,
+        "read",
+        mocker.Mock(side_effect=FileNotFoundError),
+    )
+
+    assert zen_quotes.main.QuotesManager().quotes is None
+
+
+def test_quotes_storage_write(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+    quotes_list: list[dict[str, str]],
+    quotes: zen_quotes.main.Quotes,
+) -> None:
+    output_dir = tmp_path / "output"
+    output_file = output_dir / "zen_quotes.json"
+    monkeypatch.setattr(
+        zen_quotes.main.QuotesStorage, "_OUTPUT_DIR", output_dir
+    )
+    monkeypatch.setattr(
+        zen_quotes.main.QuotesStorage, "_OUTPUT_FILE", output_file
+    )
+
+    zen_quotes.main.QuotesStorage.write(quotes)
+
+    expected_json = {
+        "last_update": str(date.today()),
+        "today": [
             {
-                "q": "A crisis is an opportunity riding the dangerous wind.",
-                "a": "Chinese Proverb",
-            },
-            {
-                "q": "Till it has loved, no man or woman can become itself.",
-                "a": "Emily Dickinson",
-            },
-        ]
-        self.quotes = Quotes(
-            last_update=date.today(),
-            today=[
-                Quote(
-                    quote=self.quotes_list[0]["q"],
-                    author=self.quotes_list[0]["a"],
-                )
-            ],
-            quotes=[
-                Quote(quote=quote["q"], author=quote["a"])
-                for quote in self.quotes_list
-            ],
+                "quote": quotes_list[0]["q"],
+                "author": quotes_list[0]["a"],
+            }
+        ],
+        "quotes": [
+            {"quote": quote["q"], "author": quote["a"]} for quote in quotes_list
+        ],
+    }
+    assert output_file.read_text(encoding="utf8") == json.dumps(
+        expected_json, indent=4
+    )
+
+
+def test_quote_str(quotes_list: list[dict[str, str]]) -> None:
+    result = str(
+        zen_quotes.main.Quote(
+            quote=quotes_list[0]["q"], author=quotes_list[0]["a"]
         )
-        self.quotes_model_json_str = self.quotes.model_dump_json(indent=4)
+    )
+    assert result == f"{quotes_list[0]['q']} - {quotes_list[0]['a']}"
 
 
-class QuotesManagerFixtureTestCase(BaseFixtureTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        with patch(
-            "zen_quotes.main.QuotesStorage.read",
-            new=Mock(side_effect=FileNotFoundError),
-        ):
-            self.quotes_manager = QuotesManager()
-
-
-class TestModule(BaseFixtureTestCase):
-    @patch("sys.stdout", new_callable=StringIO)
-    def test_main(self, mock_stdout: StringIO) -> None:
-        expected = (
-            "TODAY:\n"
-            f"{self.quotes_list[0]['q']} - {self.quotes_list[0]['a']}\n"
-            "\n"
-            "RANDOM:\n"
-            f"{self.quotes_list[1]['q']} - {self.quotes_list[1]['a']}"
-            "\n"
+class TestQuotesManagerRun:
+    @pytest.fixture(name="quotes_manager")
+    def quotes_manager_fixture(
+        self, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture
+    ) -> zen_quotes.main.QuotesManager:
+        monkeypatch.setattr(
+            zen_quotes.main.QuotesStorage,
+            "read",
+            mocker.Mock(side_effect=FileNotFoundError),
         )
 
-        with patch(
-            "zen_quotes.main.QuotesStorage.read",
-            new=Mock(return_value=self.quotes),
-        ), patch(
-            "zen_quotes.main.choice",
-            new=Mock(return_value=self.quotes.quotes[1]),
-        ):
-            main()
-        self.assertEqual(mock_stdout.getvalue(), expected)
+        return zen_quotes.main.QuotesManager()
 
-
-class TestQuote(BaseFixtureTestCase):
-    def test_str(self) -> None:
-        self.assertEqual(
-            str(
-                Quote(
-                    quote=self.quotes_list[0]["q"],
-                    author=self.quotes_list[0]["a"],
-                )
-            ),
-            f"{self.quotes_list[0]['q']} - {self.quotes_list[0]['a']}",
-        )
-
-
-class TestQuotesManager(BaseFixtureTestCase):
-    def test_init_quotes_exist(self) -> None:
-        with patch(
-            "zen_quotes.main.QuotesStorage.read",
-            new=Mock(return_value=self.quotes),
-        ):
-            self.assertIsNotNone(QuotesManager().quotes)
-
-    def test_init_quotes_none(self) -> None:
-        with patch(
-            "zen_quotes.main.QuotesStorage.read",
-            new=Mock(side_effect=FileNotFoundError),
-        ):
-            self.assertIsNone(QuotesManager().quotes)
-
-
-class TestQuotesManagerRun(QuotesManagerFixtureTestCase):
-    @patch("sys.stdout", new_callable=StringIO)
-    @patch("zen_quotes.main.QuotesStorage.write")
     def test_pass(
-        self, mock_quotes_write: MagicMock, mock_stdout: StringIO
+        self,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockerFixture,
+        quotes_list: list[dict[str, str]],
+        quotes: zen_quotes.main.Quotes,
+        quotes_manager: zen_quotes.main.QuotesManager,
     ) -> None:
-        mock_quotes_requests = Mock(
-            side_effect=[self.quotes.today, self.quotes.quotes]
+        mock_quotes_write = mocker.patch("zen_quotes.main.QuotesStorage.write")
+        monkeypatch.setattr(
+            zen_quotes.main,
+            "request_quotes",
+            mocker.Mock(side_effect=[quotes.today, quotes.quotes]),
         )
-        with patch(
-            "zen_quotes.main.request_quotes", new=mock_quotes_requests
-        ), patch(
-            "zen_quotes.main.choice",
-            new=Mock(return_value=self.quotes.quotes[1]),
-        ):
-            self.quotes_manager.run()
+        monkeypatch.setattr(
+            zen_quotes.main, "choice", lambda list: quotes.quotes[1]
+        )
 
-        mock_quotes_write.assert_called_once_with(self.quotes)
+        quotes_manager.run()
 
-        expected = (
+        mock_quotes_write.assert_called_once_with(quotes)
+        assert capsys.readouterr().out == (
             "Requesting new quotes\n"
             "TODAY:\n"
-            f"{self.quotes_list[0]['q']} - {self.quotes_list[0]['a']}\n"
+            f"{quotes_list[0]['q']} - {quotes_list[0]['a']}\n"
             "\n"
             "RANDOM:\n"
-            f"{self.quotes_list[1]['q']} - {self.quotes_list[1]['a']}"
+            f"{quotes_list[1]['q']} - {quotes_list[1]['a']}"
             "\n"
         )
-        self.assertEqual(mock_stdout.getvalue(), expected)
 
-    @patch("zen_quotes.main.QuotesStorage.write")
-    @patch("zen_quotes.main.request_quotes")
     def test_no_update(
-        self, mock_quotes_request: MagicMock, mock_quotes_write: MagicMock
+        self,
+        mocker: MockerFixture,
+        quotes: zen_quotes.main.Quotes,
+        quotes_manager: zen_quotes.main.QuotesManager,
     ) -> None:
-        self.quotes_manager.quotes = self.quotes
+        mock_request_quotes = mocker.patch("zen_quotes.main.request_quotes")
+        mock_quotes_write = mocker.patch("zen_quotes.main.QuotesStorage.write")
+        mock_quotes_print = mocker.patch.object(quotes_manager, "_print")
+        quotes_manager.quotes = quotes
 
-        with patch.object(self.quotes_manager, "_print") as mock_quotes_print:
-            self.quotes_manager.run()
+        quotes_manager.run()
 
-            mock_quotes_print.assert_called_once()
-
-        mock_quotes_request.assert_not_called()
+        mock_request_quotes.assert_not_called()
         mock_quotes_write.assert_not_called()
+        mock_quotes_print.assert_called_once()
 
-    @patch("zen_quotes.main.QuotesStorage.write")
-    @patch("zen_quotes.main.request_quotes")
     def test_quotes_yesterday(
-        self, mock_quotes_request: MagicMock, mock_quotes_write: MagicMock
+        self,
+        mocker: MockerFixture,
+        quotes: zen_quotes.main.Quotes,
+        quotes_manager: zen_quotes.main.QuotesManager,
     ) -> None:
-        self.quotes_manager.quotes = self.quotes
-        self.quotes_manager.quotes.last_update -= timedelta(days=1)
+        mock_request_quotes = mocker.patch("zen_quotes.main.request_quotes")
+        mock_quotes_write = mocker.patch("zen_quotes.main.QuotesStorage.write")
+        mock_quotes_print = mocker.patch.object(quotes_manager, "_print")
+        quotes_manager.quotes = quotes
+        quotes_manager.quotes.last_update -= timedelta(days=1)
 
-        with patch.object(self.quotes_manager, "_print") as mock_quotes_print:
-            self.quotes_manager.run()
+        quotes_manager.run()
 
-            mock_quotes_print.assert_called_once()
-
-        self.assertEqual(mock_quotes_request.call_count, 2)
+        assert mock_request_quotes.call_count == 2
         mock_quotes_write.assert_called_once()
+        mock_quotes_print.assert_called_once()
 
-    @patch("zen_quotes.main.QuotesStorage.write")
-    def test_request_quotes_error(self, mock_quotes_write: MagicMock) -> None:
-        with patch(
-            "zen_quotes.main.request_quotes",
-            new=Mock(side_effect=requests.ConnectionError),
-        ):
-            self.quotes_manager.run()
+    def test_request_quotes_error(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockerFixture,
+        quotes_manager: zen_quotes.main.QuotesManager,
+    ) -> None:
+        mock_quotes_write = mocker.patch("zen_quotes.main.QuotesStorage.write")
+        monkeypatch.setattr(
+            zen_quotes.main,
+            "request_quotes",
+            mocker.Mock(side_effect=requests.ConnectionError),
+        )
 
-        self.assertIsNone(self.quotes_manager.quotes)
+        quotes_manager.run()
+
+        assert quotes_manager.quotes is None
         mock_quotes_write.assert_not_called()
 
 
-class TestQuotesStorage(BaseFixtureTestCase):
-    def test_write(self) -> None:
-        expected_json = {
-            "last_update": str(date.today()),
-            "today": [
-                {
-                    "quote": self.quotes_list[0]["q"],
-                    "author": self.quotes_list[0]["a"],
-                }
-            ],
-            "quotes": [
-                {"quote": quote["q"], "author": quote["a"]}
-                for quote in self.quotes_list
-            ],
-        }
-        expected = json.dumps(expected_json, indent=4)
+class TestQuotesStorageRead:
+    def test_pass(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        quotes: zen_quotes.main.Quotes,
+    ) -> None:
+        monkeypatch.setattr(
+            pathlib.Path,
+            "read_text",
+            lambda *a, **k: quotes.model_dump_json(indent=4),
+        )
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            output_dir = Path(tmpdirname) / "output"
-            output_file = output_dir / "zen_quotes.json"
+        assert zen_quotes.main.QuotesStorage.read() == quotes
 
-            with patch.multiple(
-                QuotesStorage, _OUTPUT_DIR=output_dir, _OUTPUT_FILE=output_file
-            ):
-                QuotesStorage.write(self.quotes)
+    def test_file_not_found(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockerFixture,
+    ) -> None:
+        monkeypatch.setattr(
+            pathlib.Path,
+            "read_text",
+            mocker.Mock(side_effect=FileNotFoundError),
+        )
 
-            self.assertEqual(output_file.read_text(encoding="utf8"), expected)
+        with pytest.raises(FileNotFoundError):
+            zen_quotes.main.QuotesStorage.read()
 
-
-class TestQuotesStorageRead(BaseFixtureTestCase):
-    def test_pass(self) -> None:
-        with patch(
-            "pathlib.Path.read_text",
-            new=Mock(return_value=self.quotes_model_json_str),
-        ):
-            quotes = QuotesStorage.read()
-        self.assertEqual(quotes, self.quotes)
-
-    def test_file_not_found(self) -> None:
-        with patch(
-            "pathlib.Path.read_text",
-            new=Mock(side_effect=FileNotFoundError),
-        ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            self.assertRaises(FileNotFoundError, QuotesStorage.read)
-
-            output_file = (
-                Path(__file__).parent.parent.parent
-                / "output"
-                / "zen_quotes.json"
-            )
-            self.assertEqual(
-                cm.records[0].getMessage(),
+        output_file = (
+            pathlib.Path(__file__).parent.parent.parent
+            / "output"
+            / "zen_quotes.json"
+        )
+        assert caplog.record_tuples == [
+            (
+                "zen_quotes.main",
+                logging.WARNING,
                 f"Output file not found: {output_file.as_posix()}",
             )
+        ]
 
-    def test_invalid_json(self) -> None:
-        read_data = self.quotes_model_json_str.replace("today", "oday", 1)
+    def test_invalid_json(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
+        quotes: zen_quotes.main.Quotes,
+    ) -> None:
+        file_content = quotes.model_dump_json(indent=4).replace(
+            "today", "oday", 1
+        )
+        monkeypatch.setattr(
+            pathlib.Path, "read_text", lambda *a, **k: file_content
+        )
 
-        with patch(
-            "pathlib.Path.read_text", new=Mock(return_value=read_data)
-        ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            self.assertRaises(ValidationError, QuotesStorage.read)
+        with pytest.raises(ValidationError):
+            zen_quotes.main.QuotesStorage.read()
 
-            output_file = (
-                Path(__file__).parent.parent.parent
-                / "output"
-                / "zen_quotes.json"
-            )
-            self.assertEqual(
-                cm.records[0].getMessage(),
+        output_file = (
+            pathlib.Path(__file__).parent.parent.parent
+            / "output"
+            / "zen_quotes.json"
+        )
+        assert caplog.record_tuples == [
+            (
+                "zen_quotes.main",
+                logging.WARNING,
                 f"Error parsing output file: {output_file.as_posix()}",
             )
+        ]
 
 
-class TestRequestQuotes(BaseFixtureTestCase):
-    def test_quote_single(self) -> None:
-        mock_response = Mock()
-        mock_response.json = Mock(return_value=[self.quotes_list[0]])
+class TestRequestQuotes:
+    def test_quote_single(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockerFixture,
+        quotes_list: list[dict[str, str]],
+    ) -> None:
+        mock_response = mocker.Mock()
+        mock_response.json = mocker.Mock(return_value=[quotes_list[0]])
+        monkeypatch.setattr(requests, "get", lambda *a, **k: mock_response)
 
-        with patch("requests.get", new=Mock(return_value=mock_response)):
-            self.assertEqual(
-                request_quotes(QuoteMode.TODAY),
-                [
-                    Quote(
-                        quote=self.quotes_list[0]["q"],
-                        author=self.quotes_list[0]["a"],
-                    )
-                ],
+        result = zen_quotes.main.request_quotes(zen_quotes.main.QuoteMode.TODAY)
+        assert result == [
+            zen_quotes.main.Quote(
+                quote=quotes_list[0]["q"],
+                author=quotes_list[0]["a"],
             )
+        ]
 
-    def test_quote_multiple(self) -> None:
-        mock_response = Mock()
-        mock_response.json = Mock(return_value=self.quotes_list)
+    def test_quote_multiple(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockerFixture,
+        quotes_list: list[dict[str, str]],
+        quotes: zen_quotes.main.Quotes,
+    ) -> None:
+        mock_response = mocker.Mock()
+        mock_response.json = mocker.Mock(return_value=quotes_list)
+        monkeypatch.setattr(requests, "get", lambda *a, **k: mock_response)
 
-        with patch("requests.get", new=Mock(return_value=mock_response)):
-            self.assertEqual(
-                request_quotes(QuoteMode.QUOTES),
-                self.quotes.quotes,
-            )
+        assert (
+            zen_quotes.main.request_quotes(zen_quotes.main.QuoteMode.QUOTES)
+            == quotes.quotes
+        )
 
-    def test_connection_error(self) -> None:
-        with patch(
-            "requests.get", new=Mock(side_effect=requests.ConnectionError)
-        ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            self.assertRaises(
-                requests.ConnectionError, request_quotes, QuoteMode.QUOTES
-            )
-            self.assertEqual(
-                cm.records[0].getMessage(),
+    def test_connection_error(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockerFixture,
+    ) -> None:
+        monkeypatch.setattr(
+            requests, "get", mocker.Mock(side_effect=requests.ConnectionError)
+        )
+
+        with pytest.raises(requests.ConnectionError):
+            zen_quotes.main.request_quotes(zen_quotes.main.QuoteMode.QUOTES)
+
+        assert caplog.record_tuples == [
+            (
+                "zen_quotes.main",
+                logging.WARNING,
                 (
                     "ConnectionError when requesting Zen Quotes: "
                     "https://zenquotes.io/api/quotes"
                 ),
             )
+        ]
 
-    def test_http_error(self) -> None:
+    def test_http_error(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         response = requests.Response()
         response.status_code = 400
+        monkeypatch.setattr(requests, "get", lambda *a, **k: response)
 
-        with patch(
-            "requests.get", new=Mock(return_value=response)
-        ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            self.assertRaises(
-                requests.HTTPError, request_quotes, QuoteMode.QUOTES
-            )
-            self.assertEqual(
-                cm.records[0].getMessage(),
+        with pytest.raises(requests.HTTPError):
+            zen_quotes.main.request_quotes(zen_quotes.main.QuoteMode.QUOTES)
+
+        assert caplog.record_tuples == [
+            (
+                "zen_quotes.main",
+                logging.WARNING,
                 "Invalid HTTP status code: https://zenquotes.io/api/quotes",
             )
+        ]
 
-    def test_json_decode_error(self) -> None:
+    def test_json_decode_error(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockerFixture,
+    ) -> None:
         response = requests.Response()
+        mocker.patch.object(response, "raise_for_status")
+        monkeypatch.setattr(requests, "get", lambda *a, **k: response)
 
-        with patch.object(response, "raise_for_status"), patch(
-            "requests.get", new=Mock(return_value=response)
-        ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            self.assertRaises(
-                requests.exceptions.JSONDecodeError,
-                request_quotes,
-                QuoteMode.QUOTES,
-            )
-            self.assertEqual(
-                cm.records[0].getMessage(),
+        with pytest.raises(requests.exceptions.JSONDecodeError):
+            zen_quotes.main.request_quotes(zen_quotes.main.QuoteMode.QUOTES)
+
+        assert caplog.record_tuples == [
+            (
+                "zen_quotes.main",
+                logging.WARNING,
                 (
                     "Invalid JSON content in response: "
                     "https://zenquotes.io/api/quotes"
                 ),
             )
+        ]
 
-    def test_key_error(self) -> None:
-        del self.quotes_list[0]["q"]
-        mock_response = Mock()
-        mock_response.json = Mock(return_value=self.quotes_list)
+    def test_key_error(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockerFixture,
+        quotes_list: list[dict[str, str]],
+    ) -> None:
+        del quotes_list[0]["q"]
+        mock_response = mocker.Mock()
+        mock_response.json = mocker.Mock(return_value=quotes_list)
+        monkeypatch.setattr(requests, "get", lambda *a, **k: mock_response)
 
-        with patch(
-            "requests.get", new=Mock(return_value=mock_response)
-        ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            self.assertRaises(KeyError, request_quotes, QuoteMode.QUOTES)
-            self.assertEqual(
-                cm.records[0].getMessage(),
+        with pytest.raises(KeyError):
+            zen_quotes.main.request_quotes(zen_quotes.main.QuoteMode.QUOTES)
+
+        assert caplog.record_tuples == [
+            (
+                "zen_quotes.main",
+                logging.WARNING,
                 "Key missing in JSON content: https://zenquotes.io/api/quotes",
             )
+        ]
 
-    def test_timeout(self) -> None:
-        with patch(
-            "requests.get", new=Mock(side_effect=requests.Timeout)
-        ), self.assertLogs(logger=logger, level=logging.WARNING) as cm:
-            self.assertRaises(
-                requests.Timeout, request_quotes, QuoteMode.QUOTES
-            )
-            self.assertEqual(
-                cm.records[0].getMessage(),
+    def test_timeout(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockerFixture,
+    ) -> None:
+        monkeypatch.setattr(
+            requests, "get", mocker.Mock(side_effect=requests.Timeout)
+        )
+
+        with pytest.raises(requests.Timeout):
+            zen_quotes.main.request_quotes(zen_quotes.main.QuoteMode.QUOTES)
+
+        assert caplog.record_tuples == [
+            (
+                "zen_quotes.main",
+                logging.WARNING,
                 (
                     "Timeout when requesting Zen Quotes: "
                     "https://zenquotes.io/api/quotes"
                 ),
             )
-
-
-if __name__ == "__main__":
-    unittest.main()
+        ]
