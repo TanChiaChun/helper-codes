@@ -5,6 +5,7 @@ updates:
     schedule:
       interval: "cron"
       cronjob: "0 0 * * 0"
+    versioning-strategy: "increase-if-necessary"
 
   - package-ecosystem: "gitsubmodule"
     directory: "/"
