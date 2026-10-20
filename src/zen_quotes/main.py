@@ -5,7 +5,6 @@ from datetime import date
 from enum import Enum
 from pathlib import Path
 from random import choice
-from typing import Optional
 
 import requests
 from pydantic import BaseModel, ValidationError
@@ -99,7 +98,7 @@ class QuotesManager:
     """Quotes Manager."""
 
     def __init__(self) -> None:
-        self.quotes: Optional[Quotes]
+        self.quotes: Quotes | None
         try:
             self.quotes = QuotesStorage.read()
         except (FileNotFoundError, ValidationError):
@@ -131,16 +130,14 @@ class QuotesManager:
 
     def _is_update_required(self) -> bool:
         """Return True if request of new quotes is required."""
-        if self.quotes and self.quotes.last_update == date.today():
-            return False
-        return True
+        return not (self.quotes and self.quotes.last_update == date.today())
 
     def _print(self) -> None:
         """Print TODAY quote and 1 random quote from QUOTES."""
         if self.quotes:
             print("TODAY:")
             print(self.quotes.today[0])
-            print("")
+            print()
             print("RANDOM:")
             print(choice(self.quotes.quotes))
 
