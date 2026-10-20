@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
 
-git_commit_no_verify() {
-  local commit_message="$1"
-
-  git commit -m "$commit_message" --no-verify
-}
-
 set_alias() {
   alias blackw=run_ci_python_black_write
   alias eslw=run_ci_vue_eslint_write
