@@ -10,7 +10,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "black",
-    "isort",
+    "isort<9",
     "mypy",
     "pylint",
     "pytest",
