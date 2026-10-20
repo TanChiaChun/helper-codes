@@ -38,6 +38,17 @@ source_bash_completion() {
   fi
 }
 
+source_bash_function() {
+  if [[ -f "$HOME/repo/helper-codes/src/bash_function.sh" ]]; then
+    # shellcheck source=/dev/null
+    source "$HOME/repo/helper-codes/src/bash_function.sh"
+
+    echo 'Sourced bash_function'
+  else
+    echo 'bash_function not sourced'
+  fi
+}
+
 source_git_hooks_ci() {
   if [[ -f './git-hooks/src/ci.sh' ]]; then
     # shellcheck source=/dev/null
@@ -74,6 +85,7 @@ main() {
   PS1='\s-\v \w\$ ' # Update Bash prompt
 
   echo '##################################################'
+  source_bash_function
   source_bash_alias
   source_git_hooks_ci
 

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+git_commit_no_verify() {
+  local commit_message="$1"
+
+  git commit -m "$commit_message" --no-verify
+}
