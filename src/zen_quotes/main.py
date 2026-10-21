@@ -145,7 +145,7 @@ class QuotesManager:
 class QuotesStorage:
     """File I/O for `QuotesModel`."""
 
-    _OUTPUT_DIR = Path(__file__).parent.parent.parent / "output"
+    _OUTPUT_DIR = Path(__file__).parent.parent.parent / "data" / "output"
     _OUTPUT_FILE = _OUTPUT_DIR / "zen_quotes.json"
 
     @classmethod
@@ -190,7 +190,7 @@ class QuotesStorage:
                 `QuotesModel` instance to be written.
         """
         if not cls._OUTPUT_DIR.is_dir():
-            cls._OUTPUT_DIR.mkdir()
+            cls._OUTPUT_DIR.mkdir(parents=True)
 
         cls._OUTPUT_FILE.write_text(
             quotes.model_dump_json(indent=4), encoding="utf8"
