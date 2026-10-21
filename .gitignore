@@ -3,4 +3,4 @@
 .coverage
 
 # Project
-output/zen_quotes.json
+data/output/zen_quotes.json

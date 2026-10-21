@@ -90,7 +90,7 @@ def test_quotes_storage_write(
     quotes_list: list[dict[str, str]],
     quotes: zen_quotes.main.Quotes,
 ) -> None:
-    output_dir = tmp_path / "output"
+    output_dir = tmp_path / "data" / "output"
     output_file = output_dir / "zen_quotes.json"
     monkeypatch.setattr(
         zen_quotes.main.QuotesStorage, "_OUTPUT_DIR", output_dir
@@ -257,6 +257,7 @@ class TestQuotesStorageRead:
 
         output_file = (
             pathlib.Path(__file__).parent.parent.parent
+            / "data"
             / "output"
             / "zen_quotes.json"
         )
@@ -286,6 +287,7 @@ class TestQuotesStorageRead:
 
         output_file = (
             pathlib.Path(__file__).parent.parent.parent
+            / "data"
             / "output"
             / "zen_quotes.json"
         )
