@@ -91,10 +91,6 @@ main() {
 
   source_bash_completion
 
-  if (is_django_project); then
-    set_django_env_var
-  fi
-
   print_welcome_message
   echo ''
   run_zen_quotes
