@@ -1,5 +1,5 @@
 setup() {
-  load '../src/chiachun_rc.sh'
+  load '../../src/chiachun_rc.sh'
 }
 
 @test "source_git_hooks_ci_sourced()" {
