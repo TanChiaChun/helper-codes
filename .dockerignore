@@ -1,14 +1,14 @@
 # Python
-.venv/
+.venv
 **/*.pyc
-.ruff_cache/
-.mypy_cache/
-.pytest_cache/
+.ruff_cache
+.mypy_cache
+.pytest_cache
 .coverage
-htmlcov/
+htmlcov
 
 # Submodule
-git-hooks/.git/
+git-hooks/.git
 
 # Project
 data/output/zen_quotes.json
